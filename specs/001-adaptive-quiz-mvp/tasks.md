@@ -1,6 +1,6 @@
 # Tasks 001 — Adaptive quiz (MVP)
 
-- Status: Approved (2026-11-17)
+- Status: Approved (2026-11-17), T02 amended and approved (2026-11-17)
 - Date: 2026-11-17
 - Constitution: 1.0.0
 - Spec: [spec.md](spec.md) (Approved 2026-11-17, NFR-3 amended 2026-11-17)
@@ -75,7 +75,7 @@ flowchart LR
 - **Deliverables:**
   - root `package.json` with `packageManager` and `engines` (Node 24, pnpm), `.nvmrc`, `pnpm-workspace.yaml`;
   - `turbo.json` with `build`, `lint`, `typecheck`, `test`, `test:e2e`, `dev`;
-  - `tsconfig.base.json` (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`), `eslint.config.js` (flat config, `typescript-eslint`), `.prettierrc`, `vitest.workspace.ts`;
+  - `tsconfig.base.json` (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`), `eslint.config.js` (flat config, `typescript-eslint`), `.prettierrc`, `vitest.config.ts` (Vitest projects, one per package);
   - empty `packages/shared-types` and `packages/core` (`@ai-in-learning/*`), each with a `tsc` build to `dist/`, an `exports` map including the `source` condition, and one smoke test.
 - **Done when:** `pnpm install` then `pnpm turbo lint typecheck test build` passes from a clean clone; a test imports a package through the `source` condition without building it first.
 
