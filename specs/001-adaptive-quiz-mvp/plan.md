@@ -1,6 +1,6 @@
 # Plan 001 — Adaptive quiz (MVP)
 
-- Status: Approved (2026-11-17), §1 amended and approved (2026-11-17)
+- Status: Approved (2026-11-17), §1, §3 and §4 amended and approved (2026-11-17)
 - Date: 2026-11-17
 - Constitution: 1.0.0
 - Spec: [spec.md](spec.md) (Approved 2026-11-17)
@@ -69,6 +69,8 @@ flowchart LR
 
 Exact versions are the current stable majors at implementation time, locked in `pnpm-lock.yaml`.
 
+Exception: TypeScript stays on 6.0 while `typescript-eslint` supports only versions below 6.1. TypeScript 7 was current on 2026-11-17.
+
 ## 4. Repository layout
 
 ```
@@ -108,7 +110,7 @@ packages/
 - `core` has three entry points in its `exports` map: `@ai-in-learning/core` (pure, browser-safe), `@ai-in-learning/core/runner` (QuickJS) and `@ai-in-learning/core/server` (Anthropic SDK, Upstash). An ESLint `no-restricted-imports` rule forbids `core/server` in `apps/quiz`, so the SDK and Upstash never reach the bundle.
 - Packages compile with `tsc` to `dist/`. Their `exports` also declare a `source` condition pointing to `src/`, which Vite and Vitest use, so development and tests need no prior build.
 - `turbo.json`: `build` depends on `^build`; `typecheck`, `lint` and `test` depend on `^build` only where they consume `dist`; `dev` is persistent and uncached.
-- Configuration lives at the root: `tsconfig.base.json`, `eslint.config.js`, `.prettierrc`, `vitest.workspace.ts`.
+- Configuration lives at the root: `tsconfig.base.json`, `eslint.config.js`, `.prettierrc`, `vitest.config.ts` (Vitest projects, one per package).
 
 ## 5. Session state
 
