@@ -1,6 +1,6 @@
 # Plan 001 — Adaptive quiz (MVP)
 
-- Status: Approved (2026-11-17)
+- Status: Approved (2026-11-17), §1 amended and approved (2026-11-17)
 - Date: 2026-11-17
 - Constitution: 1.0.0
 - Spec: [spec.md](spec.md) (Approved 2026-11-17)
@@ -31,7 +31,7 @@ flowchart LR
 - The front-end owns the session: it holds the session state and sends it with every request ([section 5](#5-session-state)). The API keeps nothing between requests.
 - The API exposes two domain endpoints: generate the next question, and review a submitted code exercise. Both call the model; nothing else does.
 - All business rules live in `packages/core`: adaptation, concept selection, answer evaluation, prompt building, output validation, exercise test harness.
-- Visitor code never runs on the server. It runs in the browser, inside a QuickJS WebAssembly interpreter, inside a Web Worker. The API runs only model-generated reference solutions, with the same interpreter, to prove each exercise is solvable (AC-3.6).
+- Visitor code runs in the browser, inside a QuickJS WebAssembly interpreter, inside a Web Worker. The API runs the same interpreter on model-generated reference solutions, to prove each exercise is solvable (AC-3.6), and on the visitor's submitted code before a review, so the reviewer sees trusted test results ([section 7.2](#72-post-apiquizcode-review)).
 
 ## 2. Constitution check
 
