@@ -1,6 +1,6 @@
 # Spec 001 — Adaptive quiz (MVP)
 
-- Status: Approved (2026-11-17)
+- Status: Approved (2026-11-17), NFR-3 amended and approved (2026-11-17)
 - Date: 2026-11-17
 - Constitution: 1.0.0
 
@@ -113,7 +113,7 @@ Acceptance criteria are numbered so that each one can be linked to a test (const
 
 - **NFR-1 Responsiveness.** A loading indicator appears within 200 ms of any action that waits for the AI. A new question is usually ready within 5 seconds.
 - **NFR-2 Accessibility.** WCAG 2.2 level AA (constitution, principle VIII). The whole quiz, code editor included, can be used with a keyboard only, and keyboard focus can always leave the code editor.
-- **NFR-3 Bounded cost.** A session triggers a bounded number of AI requests: at most one per question generated, plus one review per code exercise submitted. The summary needs no AI request.
+- **NFR-3 Bounded cost.** A session triggers a bounded number of AI requests: at most two per question generated (the second only when the first output fails validation), plus one review per code exercise submitted. The summary needs no AI request.
 - **NFR-4 Usage limit.** A single visitor can start only a limited number of sessions per hour. The exact limit is set in the plan.
 - **NFR-5 Content quality.** Questions stay on the chosen topic, are technically correct, and single-choice questions have exactly one defensible answer. Generated content that does not have the expected structure is never shown to the visitor.
 - **NFR-6 Language.** The interface and all generated content are in English.
@@ -143,4 +143,5 @@ These product choices were made to complete the spec and confirmed by the projec
 
 ## 9. Resolved questions
 
+- **Retry on invalid AI output** (resolved 2026-11-17, during planning). NFR-3 originally allowed one AI request per question. It now allows a second request when the first output fails validation, so that a malformed or unsolvable question is replaced without the visitor seeing an error. See decision D4 in `plan.md`.
 - **React code exercises** (resolved 2026-11-17). Exercises stay on logic that runs without rendering (AC-3.7). Rendering and testing components is more realistic for React, but it makes running code in the browser significantly more complex. It is a candidate for a later spec.
