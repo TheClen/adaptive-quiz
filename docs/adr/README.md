@@ -10,6 +10,7 @@ An Architecture Decision Record (ADR) captures one significant decision: the con
 | 0002 | [Serverless deployment on Vercel, with a portable Hono API](0002-serverless-on-vercel.md)     | Accepted |
 | 0003 | [Monorepo with pnpm workspaces and Turborepo](0003-monorepo-pnpm-turborepo.md)                 | Accepted |
 | 0004 | [The API is not an open proxy to the Anthropic API](0004-api-is-not-an-open-proxy.md)          | Accepted |
+| 0005 | [Run exercise code in QuickJS (WebAssembly)](0005-quickjs-sandbox-for-exercises.md)            | Accepted |
 
 ## Adding an ADR
 
