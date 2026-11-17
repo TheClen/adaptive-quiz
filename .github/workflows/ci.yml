@@ -1,5 +1,6 @@
 # Continuous integration (plan §14, task T03).
-# Branch protection on `main` requires the `verify` job to pass.
+# Branch protection on `main` requires the check named after the `verify`
+# job ("Lint, type check, test, build"). Renaming the job means updating it.
 
 name: CI
 
