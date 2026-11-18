@@ -10,4 +10,5 @@ export * from "./rubric.js";
 export * from "./schedule.js";
 export * from "./selection.js";
 export * from "./session-state.js";
+export * from "./stem.js";
 export * from "./summary.js";
