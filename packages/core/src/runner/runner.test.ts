@@ -299,7 +299,9 @@ describe("isolation (AC-3.5)", () => {
     expect(second[0]?.passed).toBe(true);
   });
 
-  it("limits memory to 32 MB and recovers for the next run", async () => {
+  // Filling 32 MB inside QuickJS is CPU-bound: about 1.5 s locally, 2 to 7 s on CI
+  // runners shared with other test tasks, so the default 5 s is too tight.
+  it("limits memory to 32 MB and recovers for the next run", { timeout: 20_000 }, async () => {
     const results = await runner.run({
       code: `function hog() {
         const chunks = [];
