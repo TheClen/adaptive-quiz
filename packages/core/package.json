@@ -35,6 +35,8 @@
   "dependencies": {
     "@ai-in-learning/shared-types": "workspace:*",
     "@anthropic-ai/sdk": "1.9.0",
+    "@upstash/ratelimit": "2.2.1",
+    "@upstash/redis": "1.41.0",
     "quickjs-emscripten": "0.32.0",
     "zod": "4.6.7"
   }
