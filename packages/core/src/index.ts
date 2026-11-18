@@ -1,4 +1,7 @@
 /**
- * Browser-safe business logic. The first modules arrive in task T05.
+ * Browser-safe business logic: catalogue, adaptation, selection, evaluation and
+ * summary (plan §4, §6).
  */
-export const packageName = "@ai-in-learning/core";
+export * from "./catalogue.js";
+export * from "./rubric.js";
+export * from "./schedule.js";
