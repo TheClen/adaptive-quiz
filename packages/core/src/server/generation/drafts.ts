@@ -33,3 +33,35 @@ export const ChoiceDraft = z.object({
   explanation: z.string().min(1),
 });
 export type ChoiceDraft = z.infer<typeof ChoiceDraft>;
+
+/**
+ * One test of a code exercise draft. Arguments and expected value are JSON text,
+ * because structured outputs do not support a recursive schema such as an arbitrary
+ * JSON value (plan §9.1). The server parses them.
+ */
+export const CodeTestDraft = z.object({
+  description: z.string().min(1),
+  argsJson: z.string().min(1),
+  expectedJson: z.string().min(1),
+  checksImmutability: z.boolean(),
+});
+export type CodeTestDraft = z.infer<typeof CodeTestDraft>;
+
+/**
+ * What the model returns for a code exercise, before the server checks it, runs it
+ * and signs it (plan §8.4, §9.1).
+ *
+ * As for choice drafts, the schema checks structure only. The function name, the
+ * test count, field lengths, forbidden constructs and the test JSON are checked by
+ * `checkCodeDraft`, so the retry message can name the broken rule. Test ids are
+ * assigned by the server.
+ */
+export const CodeExerciseDraft = z.object({
+  prompt: z.string().min(1),
+  functionName: z.string().min(1),
+  starterCode: z.string().min(1),
+  referenceSolution: z.string().min(1),
+  tests: z.array(CodeTestDraft),
+  explanation: z.string().min(1),
+});
+export type CodeExerciseDraft = z.infer<typeof CodeExerciseDraft>;
