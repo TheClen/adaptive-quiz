@@ -13,6 +13,14 @@
       "source": "./src/runner/index.ts",
       "types": "./dist/runner/index.d.ts",
       "default": "./dist/runner/index.js"
+    },
+    "./server": {
+      "source": "./src/server/index.ts",
+      "types": "./dist/server/index.d.ts",
+      "default": "./dist/server/index.js"
+    },
+    "./server/testing": {
+      "source": "./src/server/testing/index.ts"
     }
   },
   "files": [
@@ -26,6 +34,8 @@
   },
   "dependencies": {
     "@ai-in-learning/shared-types": "workspace:*",
-    "quickjs-emscripten": "0.32.0"
+    "@anthropic-ai/sdk": "1.9.0",
+    "quickjs-emscripten": "0.32.0",
+    "zod": "4.6.7"
   }
 }
