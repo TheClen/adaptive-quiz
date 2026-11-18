@@ -1,0 +1,24 @@
+{
+  "name": "@ai-in-learning/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsx watch --conditions=source --env-file-if-exists=.env src/dev.ts",
+    "lint": "eslint . && prettier --check . --ignore-path ../../.gitignore --ignore-path ../../.prettierignore",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ai-in-learning/core": "workspace:*",
+    "@ai-in-learning/shared-types": "workspace:*",
+    "hono": "4.13.19",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@hono/node-server": "2.1.9",
+    "@types/node": "24.19.2",
+    "tsx": "4.23.15"
+  }
+}
