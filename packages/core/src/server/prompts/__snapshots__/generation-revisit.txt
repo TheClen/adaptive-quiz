@@ -1,0 +1,16 @@
+<request>
+Topic: JavaScript (javascript)
+Kind: single-choice question
+Concept: Closures (closures): lexical scope, functions capturing variables, factories
+Level: 2 of 5, common usage
+Revisit: yes. The learner missed the latest question on this concept. Test it from a different angle.
+<earlier_questions>
+What does this counter factory log after three calls?
+</earlier_questions>
+</request>
+
+<previous_questions>
+What does this counter factory log after three calls?
+Which statement about Promise.all is true?
+What does 'abc'.at(-1) return?
+</previous_questions>
