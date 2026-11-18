@@ -9,6 +9,11 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./runner": {
+      "source": "./src/runner/index.ts",
+      "types": "./dist/runner/index.d.ts",
+      "default": "./dist/runner/index.js"
+    },
     "./server": {
       "source": "./src/server/index.ts",
       "types": "./dist/server/index.d.ts",
@@ -30,6 +35,7 @@
   "dependencies": {
     "@ai-in-learning/shared-types": "workspace:*",
     "@anthropic-ai/sdk": "1.9.0",
+    "quickjs-emscripten": "0.32.0",
     "zod": "4.6.7"
   }
 }
