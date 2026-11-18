@@ -1,8 +1,13 @@
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { describe, expect, it } from "vitest";
 
-import { validMultipleDraft, validSingleDraft } from "../testing/index.js";
-import { ChoiceDraft } from "./drafts.js";
+import {
+  validJavaScriptCodeDraft,
+  validMultipleDraft,
+  validReactCodeDraft,
+  validSingleDraft,
+} from "../testing/index.js";
+import { ChoiceDraft, CodeExerciseDraft } from "./drafts.js";
 
 describe("ChoiceDraft", () => {
   it("converts to a structured-output format", () => {
@@ -32,6 +37,44 @@ describe("ChoiceDraft", () => {
       "correct",
       "rationale",
       "text",
+    ]);
+  });
+});
+
+describe("CodeExerciseDraft", () => {
+  it("converts to a structured-output format", () => {
+    const format = zodOutputFormat(CodeExerciseDraft);
+
+    expect(format.type).toBe("json_schema");
+    expect(format.schema).toMatchObject({
+      type: "object",
+      required: [
+        "prompt",
+        "functionName",
+        "starterCode",
+        "referenceSolution",
+        "tests",
+        "explanation",
+      ],
+    });
+  });
+
+  it("parses the valid fixtures", () => {
+    expect(CodeExerciseDraft.parse(validJavaScriptCodeDraft)).toEqual(validJavaScriptCodeDraft);
+    expect(CodeExerciseDraft.parse(validReactCodeDraft)).toEqual(validReactCodeDraft);
+  });
+
+  it("leaves counts, names and lengths to the checks, so their reason can be named", () => {
+    const draft = { ...validJavaScriptCodeDraft, functionName: "not valid", tests: [] };
+    expect(CodeExerciseDraft.safeParse(draft).success).toBe(true);
+  });
+
+  it("has tests as JSON text with no ids: the server parses them and assigns ids", () => {
+    expect(Object.keys(CodeExerciseDraft.shape.tests.element.shape).sort()).toEqual([
+      "argsJson",
+      "checksImmutability",
+      "description",
+      "expectedJson",
     ]);
   });
 });

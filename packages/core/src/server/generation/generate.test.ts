@@ -8,6 +8,7 @@ import { buildRetryMessage, generationSystemPrompt, type RetryReason } from "../
 import {
   FakeModelClient,
   type FakeModelStep,
+  generationContext,
   multipleChoiceState,
   singleChoiceState,
   validMultipleDraft,
@@ -191,7 +192,7 @@ describe("generateQuestion: broken drafts", () => {
     async ({ kind, draft, reason }) => {
       const model = fake(draft, draft);
 
-      const result = await generateQuestion({ model }, STATES[kind]);
+      const result = await generateQuestion(generationContext(model), STATES[kind]);
 
       expect(result).toMatchObject({ ok: false, code: "generation_failed" });
       expect(result.attempts.map((attempt) => attempt.rejection)).toEqual([reason, reason]);
@@ -202,7 +203,7 @@ describe("generateQuestion: broken drafts", () => {
   it.each(BROKEN)("retries a $name, naming the broken rule", async ({ kind, draft, reason }) => {
     const model = fake(draft, VALID[kind]);
 
-    const result = await generateQuestion({ model }, STATES[kind]);
+    const result = await generateQuestion(generationContext(model), STATES[kind]);
 
     expect(result.ok).toBe(true);
     expect(model.callCount).toBe(2);
@@ -216,7 +217,7 @@ describe("generateQuestion: broken drafts", () => {
   it("rejects a stem that nearly duplicates a previous one (AC-5.3)", async () => {
     const model = fake(validMultipleDraft, validMultipleDraft);
 
-    const result = await generateQuestion({ model }, nearDuplicateState);
+    const result = await generateQuestion(generationContext(model), nearDuplicateState);
 
     expect(result.ok).toBe(false);
     expect(result.attempts[0]?.rejection).toEqual({ rule: "near-duplicate", question: 1 });
@@ -229,7 +230,10 @@ describe("generateQuestion: broken drafts", () => {
     };
     const model = fake(draft);
 
-    const result = await generateQuestion({ model }, { ...singleChoiceState, topic: "react" });
+    const result = await generateQuestion(generationContext(model), {
+      ...singleChoiceState,
+      topic: "react",
+    });
 
     expect(result.ok).toBe(true);
   });
@@ -243,7 +247,7 @@ describe("generateQuestion: model failures", () => {
   ] as const)("retries after a %s output", async (failure, reason) => {
     const model = new FakeModelClient([{ failure }, { output: validSingleDraft }]);
 
-    const result = await generateQuestion({ model }, singleChoiceState);
+    const result = await generateQuestion(generationContext(model), singleChoiceState);
 
     expect(result.ok).toBe(true);
     expect(result.attempts.map((attempt) => attempt.rejection)).toEqual([reason, null]);
@@ -253,7 +257,7 @@ describe("generateQuestion: model failures", () => {
   it("gives generation_failed after two unusable outputs", async () => {
     const model = new FakeModelClient([{ failure: "refusal" }, { failure: "max_tokens" }]);
 
-    const result = await generateQuestion({ model }, singleChoiceState);
+    const result = await generateQuestion(generationContext(model), singleChoiceState);
 
     expect(result).toMatchObject({ ok: false, code: "generation_failed" });
     expect(model.callCount).toBe(2);
@@ -263,7 +267,7 @@ describe("generateQuestion: model failures", () => {
     const error = new ModelError("ai_unavailable");
     const model = new FakeModelClient([{ error }]);
 
-    await expect(generateQuestion({ model }, singleChoiceState)).rejects.toBe(error);
+    await expect(generateQuestion(generationContext(model), singleChoiceState)).rejects.toBe(error);
     expect(model.callCount).toBe(1);
   });
 
@@ -271,7 +275,7 @@ describe("generateQuestion: model failures", () => {
     const error = new ModelError("budget_exhausted");
     const model = new FakeModelClient([{ failure: "refusal" }, { error }]);
 
-    await expect(generateQuestion({ model }, singleChoiceState)).rejects.toBe(error);
+    await expect(generateQuestion(generationContext(model), singleChoiceState)).rejects.toBe(error);
     expect(model.callCount).toBe(2);
   });
 });
@@ -282,7 +286,7 @@ describe("generateQuestion: valid drafts", () => {
     async (kind) => {
       const model = fake(VALID[kind]);
 
-      const result = await generateQuestion({ model }, STATES[kind]);
+      const result = await generateQuestion(generationContext(model), STATES[kind]);
 
       if (!result.ok) throw new Error("Expected a question");
       expect(model.callCount).toBe(1);
@@ -296,7 +300,7 @@ describe("generateQuestion: valid drafts", () => {
   it("sends the cached system prompt, the choice route and the draft schema", async () => {
     const model = fake(validMultipleDraft);
 
-    await generateQuestion({ model }, multipleChoiceState);
+    await generateQuestion(generationContext(model), multipleChoiceState);
 
     expect(model.requests[0]).toMatchObject({
       route: "choice",
@@ -312,7 +316,7 @@ describe("generateQuestion: valid drafts", () => {
     } satisfies SessionState;
     const model = fake(validMultipleDraft);
 
-    const result = await generateQuestion({ model }, missed);
+    const result = await generateQuestion(generationContext(model), missed);
 
     if (!result.ok) throw new Error("Expected a question");
     expect(result.response.conceptId).toBe("promises");
@@ -334,7 +338,7 @@ describe("generateQuestion: valid drafts", () => {
     } satisfies SessionState;
     const model = fake(validSingleDraft);
 
-    const result = await generateQuestion({ model }, state);
+    const result = await generateQuestion(generationContext(model), state);
 
     if (!result.ok) throw new Error("Expected a question");
     expect(result.response.position).toBe(3);
@@ -348,7 +352,7 @@ describe("generateQuestion: valid drafts", () => {
   it("keeps the answer key through the shuffle and drops the rationales", async () => {
     const model = fake(validMultipleDraft);
 
-    const result = await generateQuestion({ model }, multipleChoiceState);
+    const result = await generateQuestion(generationContext(model), multipleChoiceState);
 
     if (!result.ok || result.response.question.kind !== "multiple") {
       throw new Error("Expected a multiple-choice question");
@@ -368,8 +372,14 @@ describe("generateQuestion: valid drafts", () => {
   });
 
   it("shuffles the same way for the same seed and position", async () => {
-    const first = await generateQuestion({ model: fake(validSingleDraft) }, singleChoiceState);
-    const second = await generateQuestion({ model: fake(validSingleDraft) }, singleChoiceState);
+    const first = await generateQuestion(
+      generationContext(fake(validSingleDraft)),
+      singleChoiceState,
+    );
+    const second = await generateQuestion(
+      generationContext(fake(validSingleDraft)),
+      singleChoiceState,
+    );
 
     expect(first).toEqual(second);
   });
@@ -377,32 +387,15 @@ describe("generateQuestion: valid drafts", () => {
   it("does not always put the correct option first", async () => {
     const correctIds = new Set<string>();
     for (let seed = 0; seed < 40; seed += 1) {
-      const result = await generateQuestion(
-        { model: fake(validSingleDraft) },
-        { ...singleChoiceState, seed },
-      );
+      const result = await generateQuestion(generationContext(fake(validSingleDraft)), {
+        ...singleChoiceState,
+        seed,
+      });
       if (result.ok && result.response.question.kind === "single") {
         correctIds.add(result.response.question.correctOptionId);
       }
     }
 
     expect([...correctIds].sort()).toEqual(["a", "b", "c", "d"]);
-  });
-
-  it("refuses code exercise positions, which have their own pipeline", async () => {
-    const state = {
-      version: 1,
-      topic: "javascript",
-      seed: 1,
-      answers: [
-        { kind: "single", conceptId: "closures", correct: true, stem: "One?" },
-        { kind: "multiple", conceptId: "promises", correct: true, stem: "Two?" },
-        { kind: "single", conceptId: "functions", correct: true, stem: "Three?" },
-      ],
-    } satisfies SessionState;
-    const model = fake();
-
-    await expect(generateQuestion({ model }, state)).rejects.toThrow("not implemented");
-    expect(model.callCount).toBe(0);
   });
 });
