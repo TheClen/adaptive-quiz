@@ -1,0 +1,83 @@
+import { checkSessionState } from "@ai-in-learning/core";
+import {
+  type GenerationAttempt,
+  generateQuestion,
+  type ModelUsage,
+} from "@ai-in-learning/core/server";
+import { NextQuestionRequest } from "@ai-in-learning/shared-types";
+import { Hono } from "hono";
+
+import type { AppBindings } from "../app.js";
+import { parseJsonBody } from "../http/body.js";
+import { ApiFailure } from "../http/errors.js";
+import type { RequestLogFields } from "../http/logging.js";
+import { clientKey, enforceLimit, withGlobalCap } from "../http/rate-limits.js";
+
+function totalUsage(attempts: readonly GenerationAttempt[]): ModelUsage {
+  return attempts.reduce<ModelUsage>(
+    (total, { usage }) => ({
+      inputTokens: total.inputTokens + usage.inputTokens,
+      outputTokens: total.outputTokens + usage.outputTokens,
+      cacheReadInputTokens: total.cacheReadInputTokens + usage.cacheReadInputTokens,
+      cacheCreationInputTokens: total.cacheCreationInputTokens + usage.cacheCreationInputTokens,
+    }),
+    { inputTokens: 0, outputTokens: 0, cacheReadInputTokens: 0, cacheCreationInputTokens: 0 },
+  );
+}
+
+/** Model, token usage and rejected rules, never drafts or prompts (plan §11.4). */
+function logAttempts(log: RequestLogFields, attempts: readonly GenerationAttempt[]): void {
+  const last = attempts.at(-1);
+  if (last !== undefined) {
+    log.model = last.model;
+  }
+  log.attempts = attempts.length;
+  log.usage = totalUsage(attempts);
+  log.rejections = attempts.flatMap(({ rejection }) =>
+    rejection === null ? [] : [rejection.rule],
+  );
+}
+
+/** The quiz routes, mounted at `/api/quiz` (plan §7). */
+export function quizRoutes(): Hono<AppBindings> {
+  const routes = new Hono<AppBindings>();
+
+  /**
+   * `POST /api/quiz/next-question` (plan §7.1, §12). Checks run cheapest first, and
+   * nothing reaches the model before every check has passed:
+   *
+   * 1. the body and the session state (`invalid_request`);
+   * 2. `sessions` for a new session, then `questions`: a refused `sessions` check
+   *    is not counted, so a visitor who keeps starting sessions past the limit does
+   *    not use up their questions;
+   * 3. `global`, before each model call (in `withGlobalCap`).
+   */
+  routes.post("/next-question", async (c) => {
+    const { services, log } = c.var;
+    const { state } = await parseJsonBody(c, NextQuestionRequest);
+    if (!checkSessionState(state).ok) {
+      throw new ApiFailure("invalid_request");
+    }
+
+    const ipHash = await clientKey(c.var.ipHash);
+    if (state.answers.length === 0) {
+      await enforceLimit(services.rateLimiter, { limit: "sessions", ipHash });
+    }
+    await enforceLimit(services.rateLimiter, { limit: "questions", ipHash });
+
+    const model = withGlobalCap(services.model, services.rateLimiter, () => {
+      log.attempts = (log.attempts ?? 0) + 1;
+    });
+    const result = await generateQuestion(
+      { model, runner: services.runner, signingSecret: services.signingSecret },
+      state,
+    );
+    logAttempts(log, result.attempts);
+    if (!result.ok) {
+      throw new ApiFailure(result.code);
+    }
+    return c.json(result.response, 200);
+  });
+
+  return routes;
+}

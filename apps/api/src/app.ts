@@ -12,6 +12,7 @@ import {
   loggedPath,
   type RequestLogFields,
 } from "./http/logging.js";
+import { quizRoutes } from "./routes/quiz.js";
 import { createServices, type Services } from "./services.js";
 
 /** Request bodies above this size are rejected before parsing (plan §7). */
@@ -100,6 +101,8 @@ export function createApp(options: AppOptions): App {
       },
     }),
   );
+
+  app.route("/api/quiz", quizRoutes());
 
   app.notFound((c) => {
     const failure = new ApiFailure("invalid_request");

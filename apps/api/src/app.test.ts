@@ -1,5 +1,9 @@
 import { hashIp, ModelError, RateLimiterUnavailableError } from "@ai-in-learning/core/server";
-import { FakeModelClient, MemoryRateLimiter } from "@ai-in-learning/core/server/testing";
+import {
+  FakeModelClient,
+  MemoryRateLimiter,
+  testRunner,
+} from "@ai-in-learning/core/server/testing";
 import { ApiError, type ErrorCode } from "@ai-in-learning/shared-types";
 import { describe, expect, it } from "vitest";
 
@@ -31,6 +35,7 @@ function setup(source: Record<string, string | undefined> = VALID_ENV): Setup {
     createServices: (env) => ({
       model: new FakeModelClient([]),
       rateLimiter: new MemoryRateLimiter(),
+      runner: testRunner,
       signingSecret: env.QUIZ_SIGNING_SECRET,
     }),
     log: (line) => lines.push(line),

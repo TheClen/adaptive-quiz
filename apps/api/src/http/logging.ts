@@ -18,8 +18,12 @@ export interface RequestLogFields {
   /** The names of missing or malformed environment variables, never their values. */
   invalidVariables?: readonly EnvName[];
   model?: string;
+  /** Model calls made, retries included. */
   attempts?: number;
+  /** Summed over every attempt. */
   usage?: ModelUsage;
+  /** The rule each rejected draft broke, for example `option-count`. */
+  rejections?: readonly string[];
 }
 
 /** One structured line per request (plan §11.4). */
