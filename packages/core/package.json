@@ -8,6 +8,11 @@
       "source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./runner": {
+      "source": "./src/runner/index.ts",
+      "types": "./dist/runner/index.d.ts",
+      "default": "./dist/runner/index.js"
     }
   },
   "files": [
@@ -20,6 +25,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ai-in-learning/shared-types": "workspace:*"
+    "@ai-in-learning/shared-types": "workspace:*",
+    "quickjs-emscripten": "0.32.0"
   }
 }
