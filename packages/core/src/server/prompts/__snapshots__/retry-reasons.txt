@@ -1,0 +1,143 @@
+--- single {"rule":"invalid-output"}
+<retry>
+Your previous item was rejected. It did not match the required output format.
+Write a new item that follows every rule.
+</retry>
+
+--- single {"rule":"max-tokens"}
+<retry>
+Your previous item was rejected. It was cut off because it was too long. Keep the new item shorter.
+Write a new item that follows every rule.
+</retry>
+
+--- single {"rule":"refusal"}
+<retry>
+Your previous item was rejected. It did not contain a quiz item.
+Write a new item that follows every rule.
+</retry>
+
+--- single {"rule":"option-count","count":5}
+<retry>
+Your previous item was rejected. It had 5 options; a single-choice question needs exactly 4.
+Write a new item that follows every rule.
+</retry>
+
+--- multiple {"rule":"option-count","count":3}
+<retry>
+Your previous item was rejected. It had 3 options; a multiple-choice question needs 4 to 6.
+Write a new item that follows every rule.
+</retry>
+
+--- single {"rule":"correct-count","count":2}
+<retry>
+Your previous item was rejected. It marked 2 options as correct; exactly 1 must be correct.
+Write a new item that follows every rule.
+</retry>
+
+--- multiple {"rule":"correct-count","count":1}
+<retry>
+Your previous item was rejected. It marked 1 option as correct; at least 2 must be correct.
+Write a new item that follows every rule.
+</retry>
+
+--- multiple {"rule":"no-incorrect-option"}
+<retry>
+Your previous item was rejected. Every option was correct; at least 1 must be incorrect.
+Write a new item that follows every rule.
+</retry>
+
+--- single {"rule":"duplicate-options"}
+<retry>
+Your previous item was rejected. Two options had the same text.
+Write a new item that follows every rule.
+</retry>
+
+--- single {"rule":"field-too-long","field":"prompt"}
+<retry>
+Your previous item was rejected. The question was longer than 600 characters.
+Write a new item that follows every rule.
+</retry>
+
+--- single {"rule":"field-too-long","field":"option"}
+<retry>
+Your previous item was rejected. An option was longer than 200 characters.
+Write a new item that follows every rule.
+</retry>
+
+--- single {"rule":"field-too-long","field":"explanation"}
+<retry>
+Your previous item was rejected. The explanation was longer than 800 characters.
+Write a new item that follows every rule.
+</retry>
+
+--- code {"rule":"field-too-long","field":"code"}
+<retry>
+Your previous item was rejected. A piece of code was longer than 2,000 characters.
+Write a new item that follows every rule.
+</retry>
+
+--- code {"rule":"field-too-long","field":"test-description"}
+<retry>
+Your previous item was rejected. A test description was longer than 200 characters.
+Write a new item that follows every rule.
+</retry>
+
+--- single {"rule":"snippet-language"}
+<retry>
+Your previous item was rejected. The snippet language was wrong: use "jsx" only for a React snippet that contains JSX.
+Write a new item that follows every rule.
+</retry>
+
+--- single {"rule":"near-duplicate","question":2}
+<retry>
+Your previous item was rejected. It was too similar to previous question 2. Write a clearly different one.
+Write a new item that follows every rule.
+</retry>
+
+--- code {"rule":"forbidden-construct","construct":"hook","in":"starter-code"}
+<retry>
+Your previous item was rejected. The starter code used a hook call, which exercises must not use.
+Write a new item that follows every rule.
+</retry>
+
+--- code {"rule":"forbidden-construct","construct":"jsx","in":"reference-solution"}
+<retry>
+Your previous item was rejected. The reference solution used JSX, which exercises must not use.
+Write a new item that follows every rule.
+</retry>
+
+--- code {"rule":"invalid-test-json","test":2,"field":"args"}
+<retry>
+Your previous item was rejected. The arguments of test 2 were not valid JSON.
+Write a new item that follows every rule.
+</retry>
+
+--- code {"rule":"invalid-test-json","test":4,"field":"expected"}
+<retry>
+Your previous item was rejected. The expected value of test 4 was not valid JSON.
+Write a new item that follows every rule.
+</retry>
+
+--- code {"rule":"args-not-array","test":1}
+<retry>
+Your previous item was rejected. The arguments of test 1 were not a JSON array.
+Write a new item that follows every rule.
+</retry>
+
+--- code {"rule":"test-too-large","test":6}
+<retry>
+Your previous item was rejected. Test 6 was larger than 2,048 characters of JSON.
+Write a new item that follows every rule.
+</retry>
+
+--- code {"rule":"reference-failed","test":3}
+<retry>
+Your previous item was rejected. The reference solution failed test 3.
+Write a new item that follows every rule.
+</retry>
+
+--- code {"rule":"starter-passes"}
+<retry>
+Your previous item was rejected. The starter code already passed every test; it must fail at least one.
+Write a new item that follows every rule.
+</retry>
