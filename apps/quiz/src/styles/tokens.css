@@ -1,0 +1,49 @@
+/*
+ * Design tokens. Text colours reach at least 4.5:1 on the backgrounds they are
+ * used on, and UI boundaries and the focus ring at least 3:1 (WCAG 2.2 AA).
+ */
+:root {
+  /* Colours */
+  --color-background: #f6f6f3;
+  --color-surface: #ffffff;
+  --color-text: #1b1b1f;
+  --color-text-muted: #4b4b55;
+  --color-border: #8a8a94;
+  --color-primary: #1d4ed8;
+  --color-primary-hover: #1e3fae;
+  --color-on-primary: #ffffff;
+  --color-focus: #1d4ed8;
+  --color-notice-background: #fff7e0;
+  --color-notice-border: #a16207;
+  --color-error-background: #fdeeec;
+  --color-error-border: #b42318;
+
+  /* Typography */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --font-size-small: 0.875rem;
+  --font-size-body: 1rem;
+  --font-size-large: 1.25rem;
+  --font-size-title: 2rem;
+  --line-height-body: 1.5;
+  --line-height-title: 1.2;
+
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  /* Shapes */
+  --radius-small: 0.25rem;
+  --radius: 0.5rem;
+  --border-width: 1px;
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 2px;
+
+  /* Layout: desktop first (NFR-7) */
+  --content-width: 48rem;
+}

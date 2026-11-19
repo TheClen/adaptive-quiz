@@ -17,6 +17,24 @@ export default defineConfig(
     },
   },
   {
+    // The server entry of `core` pulls the Anthropic SDK and Upstash: it must
+    // never reach the quiz bundle (plan §4, principle II).
+    files: ["apps/quiz/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@ai-in-learning/core/server", "@ai-in-learning/core/server/*"],
+              message: "core/server is server-only. Use @ai-in-learning/core in the quiz app.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ["**/*.js"],
     extends: [tseslint.configs.disableTypeChecked],
   },
