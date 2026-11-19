@@ -1,0 +1,19 @@
+.screen {
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: var(--space-7) var(--space-5);
+}
+
+.title {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-size-title);
+}
+
+.lead {
+  margin: 0 0 var(--space-5);
+  font-size: var(--font-size-large);
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
