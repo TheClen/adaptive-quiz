@@ -7,6 +7,7 @@ import { ErrorState } from "../screens/ErrorState.js";
 import { Feedback } from "../screens/Feedback.js";
 import { Home } from "../screens/Home.js";
 import { Question } from "../screens/Question.js";
+import { Summary } from "../screens/Summary.js";
 import {
   initialQuizState,
   type NextQuestion,
@@ -72,13 +73,15 @@ export function QuizApp({
             correct={answers.at(-1)?.correct ?? false}
             levelChange={levelChange(answers)}
             level={levelHistory(answers).at(-1) ?? START_LEVEL}
-            // The summary after the last question arrives with T22.
-            onNext={state.next.status === "none" ? null : next}
+            isLast={state.next.status === "none"}
+            onNext={next}
           />
         );
       }
       case "error":
         return <ErrorState failure={state.failure} onRetry={retry} onHome={goHome} />;
+      case "summary":
+        return <Summary session={state.session} onStart={start} />;
     }
   }
 }

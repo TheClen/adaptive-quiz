@@ -152,3 +152,29 @@ export const lastQuestion = {
   position: 10,
   level: 4,
 } satisfies NextQuestionResponse;
+
+/**
+ * {@link sessionWithNineAnswers} with {@link lastQuestion} answered correctly:
+ * 6 out of 10, final level 5. Closures, missed on its 8th question, is mastered
+ * by its latest attempt (AC-7.2).
+ */
+export const completeSession = {
+  ...sessionWithNineAnswers,
+  answers: [
+    ...sessionWithNineAnswers.answers,
+    { kind: "single", conceptId: "closures", correct: true, stem: lastQuestion.question.prompt },
+  ],
+} satisfies SessionState;
+
+/** A complete React session with every answer correct: nothing to review. */
+export const perfectSession = {
+  version: 1,
+  topic: "react",
+  seed: 7,
+  answers: Array.from({ length: 10 }, (_, index) => ({
+    kind: "single" as const,
+    conceptId: index % 2 === 0 ? "reducers" : "refs",
+    correct: true,
+    stem: `Question ${String(index + 1)}`,
+  })),
+} satisfies SessionState;

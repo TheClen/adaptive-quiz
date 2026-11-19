@@ -234,6 +234,70 @@ describe("QuizApp prefetch", () => {
   });
 });
 
+/** Opens on the 10th question, answers it correctly and opens the summary. */
+async function reachSummary() {
+  const rendered = renderQuiz({
+    initialState: { screen: "answering", session: sessionWithNineAnswers, question: lastQuestion },
+  });
+  const { user } = rendered;
+  await user.click(screen.getByRole("radio", { name: "2" }));
+  await user.click(screen.getByRole("button", { name: "Submit" }));
+  await user.click(screen.getByRole("button", { name: "See your results" }));
+  return rendered;
+}
+
+describe("QuizApp summary", () => {
+  it("shows the summary after the 10th feedback, focused, with no request (AC-7.1, NFR-3)", async () => {
+    const { fake, container } = await reachSummary();
+
+    const heading = screen.getByRole("heading", { level: 1, name: "6 out of 10 correct" });
+    expect(document.activeElement).toBe(heading);
+    expect(screen.getByText("You finished at level 5/5.")).toBeDefined();
+    expect(screen.getByRole("img", { name: /^Level: 3, 4, 3/ })).toBeDefined();
+    expect(screen.getByRole("region", { name: "Concepts mastered" })).toBeDefined();
+    expect(screen.getByRole("region", { name: "Concepts to review" })).toBeDefined();
+    // The summary is outside the questions: no progress header.
+    expect(screen.queryByRole("banner")).toBeNull();
+    expect(fake.nextQuestionCalls).toHaveLength(0);
+    expect(fake.codeReviewCalls).toHaveLength(0);
+    await expectNoAxeViolations(container);
+  });
+
+  it("starts a fresh session on the same topic (AC-7.3)", async () => {
+    const { fake, user } = await reachSummary();
+
+    await user.click(screen.getByRole("button", { name: "JavaScript again" }));
+
+    expect(screen.getByRole("status").textContent).toBe("Preparing your question…");
+    expectProgress("JavaScript", 1, 3);
+    expect(fake.nextQuestionCalls).toHaveLength(1);
+    const state = fake.nextQuestionCalls[0]?.request.state;
+    expect(state).toMatchObject({ version: 1, topic: "javascript", answers: [] });
+    expect(Number.isInteger(state?.seed)).toBe(true);
+
+    await act(async () => {
+      fake.nextQuestionCalls[0]?.resolve(firstQuestion);
+      await Promise.resolve();
+    });
+    expect(screen.getByRole("heading", { level: 1, name: "Question 1" })).toBeDefined();
+  });
+
+  it("starts a fresh session on the other topic (AC-7.3)", async () => {
+    const { fake, user } = await reachSummary();
+
+    await user.click(screen.getByRole("button", { name: "Switch to React" }));
+
+    expect(screen.getByRole("status").textContent).toBe("Preparing your question…");
+    expectProgress("React", 1, 3);
+    expect(fake.nextQuestionCalls).toHaveLength(1);
+    expect(fake.nextQuestionCalls[0]?.request.state).toMatchObject({
+      version: 1,
+      topic: "react",
+      answers: [],
+    });
+  });
+});
+
 describe("QuizApp errors", () => {
   it.each(ErrorCode.options)(
     "shows the catalogue message for %s (AC-8.1 to AC-8.4)",

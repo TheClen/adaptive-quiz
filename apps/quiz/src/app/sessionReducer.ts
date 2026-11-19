@@ -34,7 +34,7 @@ export type ChoiceQuestion = SingleChoiceQuestion | MultipleChoiceQuestion;
  * the only request for that question (NFR-3).
  */
 export type NextQuestion =
-  /** The session is complete: the summary needs no request. */
+  /** The session is complete: "Next question" leads to the summary, which needs no request. */
   | { readonly status: "none" }
   | { readonly status: "pending"; readonly requestId: number }
   | { readonly status: "ready"; readonly question: NextQuestionResponse }
@@ -72,6 +72,11 @@ export type QuizState =
       readonly session: SessionState;
       readonly failure: RequestFailure;
       readonly failedStep: FailedStep;
+    }
+  | {
+      readonly screen: "summary";
+      /** The complete session: the summary is computed from its answers, with no request (NFR-3). */
+      readonly session: SessionState;
     };
 
 export type QuizAction =
@@ -225,8 +230,8 @@ function showNext(state: Extract<QuizState, { readonly screen: "feedback" }>): Q
         failedStep: "nextQuestion",
       };
     case "none":
-      // The summary arrives with T22.
-      return state;
+      // The session is complete: the summary is computed locally (NFR-3).
+      return { screen: "summary", session: state.session };
   }
 }
 
@@ -250,13 +255,14 @@ export interface SessionProgress {
 }
 
 /**
- * The header content of a screen, or `null` on the home screen. The position is
+ * The header content of a screen, or `null` on the home and summary screens,
+ * which are outside the questions. The position is
  * the question being prepared, answered or retried, or the one just answered on
  * the feedback screen; the level is derived from the answers with `core`, as the
  * API derives it (AC-4.5), so feedback shows the level the answer led to.
  */
 export function sessionProgress(state: QuizState): SessionProgress | null {
-  if (state.screen === "home") {
+  if (state.screen === "home" || state.screen === "summary") {
     return null;
   }
   const { topic, answers } = state.session;

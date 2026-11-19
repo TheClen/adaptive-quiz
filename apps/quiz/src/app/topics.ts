@@ -8,3 +8,8 @@ export const TOPIC_LABELS = {
 
 /** The topics in the order the home screen offers them. */
 export const TOPICS = ["javascript", "react"] as const satisfies readonly TopicId[];
+
+/** The topic a visitor can switch to from the summary (AC-7.3). */
+export function otherTopic(topic: TopicId): TopicId {
+  return topic === "javascript" ? "react" : "javascript";
+}

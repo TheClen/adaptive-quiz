@@ -12,7 +12,8 @@ import screen from "./Screen.module.css";
 /**
  * The feedback screen of a choice question (AC-6.1): the verdict in icon and
  * words, every option marked as correct or not and as chosen or not, the
- * explanation, the level change (AC-4.4) and "Next question" (AC-6.4).
+ * explanation, the level change (AC-4.4) and "Next question" (AC-6.4), or
+ * "See your results" after the last question.
  */
 export function Feedback({
   question,
@@ -20,6 +21,7 @@ export function Feedback({
   correct,
   levelChange,
   level,
+  isLast,
   onNext,
 }: {
   readonly question: NextQuestionResponse & { readonly question: ChoiceQuestion };
@@ -28,8 +30,10 @@ export function Feedback({
   readonly levelChange: LevelChange;
   /** The level after the answer. */
   readonly level: Level;
-  /** Shows the next question; `null` after the last question, which leads to the summary. */
-  readonly onNext: (() => void) | null;
+  /** True after the last question: the button leads to the summary. */
+  readonly isLast: boolean;
+  /** Shows the next question, or the summary after the last one. */
+  readonly onNext: () => void;
 }) {
   const content = question.question;
   const correctIds = new Set<OptionId>(
@@ -81,11 +85,9 @@ export function Feedback({
       <h2 className={styles.heading}>Explanation</h2>
       <p className={styles.explanation}>{content.explanation}</p>
 
-      {onNext === null ? null : (
-        <button type="button" className={buttons.primary} onClick={onNext}>
-          Next question
-        </button>
-      )}
+      <button type="button" className={buttons.primary} onClick={onNext}>
+        {isLast ? "See your results" : "Next question"}
+      </button>
     </section>
   );
 }

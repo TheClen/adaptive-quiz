@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  completeSession,
   firstQuestion,
   lastQuestion,
   multipleChoiceQuestion,
@@ -230,14 +231,14 @@ describe("quizReducer feedback and prefetch", () => {
     ).toBe(feedback);
   });
 
-  it("stays on the last feedback, whose summary arrives later", () => {
+  it("shows the summary after the last feedback, with no request (NFR-3)", () => {
     const last = quizReducer(answering, {
       type: "answered",
       session: answered,
       selectedIds: ["b"],
       requestId: null,
     });
-    expect(quizReducer(last, { type: "next" })).toBe(last);
+    expect(quizReducer(last, { type: "next" })).toEqual({ screen: "summary", session: answered });
   });
 
   it("ignores Next question outside the feedback screen", () => {
@@ -248,6 +249,10 @@ describe("quizReducer feedback and prefetch", () => {
 describe("sessionProgress", () => {
   it("is null on the home screen", () => {
     expect(sessionProgress(initialQuizState)).toBeNull();
+  });
+
+  it("is null on the summary screen", () => {
+    expect(sessionProgress({ screen: "summary", session: completeSession })).toBeNull();
   });
 
   it("gives the next position and the level derived from the answers", () => {
