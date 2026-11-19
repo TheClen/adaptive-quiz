@@ -95,3 +95,60 @@ export const singleChoiceWithSnippet = {
     },
   },
 } satisfies NextQuestionResponse;
+
+/** The second question of a JavaScript session: multiple choice. */
+export const secondQuestion = {
+  position: 2,
+  level: 4,
+  conceptId: "array-methods",
+  conceptLabel: "Array methods",
+  question: {
+    kind: "multiple",
+    prompt: "Which methods return a new array?",
+    snippet: null,
+    options: [
+      { id: "a", text: "map" },
+      { id: "b", text: "forEach" },
+      { id: "c", text: "filter" },
+      { id: "d", text: "push" },
+    ],
+    correctOptionIds: ["a", "c"],
+    explanation:
+      "`map` and `filter` build a new array; `forEach` returns undefined and `push` mutates.",
+  },
+} satisfies NextQuestionResponse;
+
+/**
+ * A JavaScript session after nine answers, following the kind schedule, at
+ * level 4: right, wrong, right, wrong, right, wrong, right, wrong, right.
+ */
+export const sessionWithNineAnswers = {
+  version: 1,
+  topic: "javascript",
+  seed: 42,
+  answers: (
+    [
+      ["single", "closures"],
+      ["multiple", "array-methods"],
+      ["single", "promises"],
+      ["code", "array-methods"],
+      ["single", "this-binding"],
+      ["multiple", "maps-and-sets"],
+      ["single", "event-loop"],
+      ["code", "closures"],
+      ["multiple", "strings"],
+    ] as const
+  ).map(([kind, conceptId], index) => ({
+    kind,
+    conceptId,
+    correct: index % 2 === 0,
+    stem: `Question ${String(index + 1)} about ${conceptId}`,
+  })),
+} satisfies SessionState;
+
+/** The 10th and last question of {@link sessionWithNineAnswers}. */
+export const lastQuestion = {
+  ...firstQuestion,
+  position: 10,
+  level: 4,
+} satisfies NextQuestionResponse;
