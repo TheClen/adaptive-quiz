@@ -1,0 +1,62 @@
+.fieldset {
+  min-width: 0;
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  font-size: var(--font-size-large);
+}
+
+.instruction {
+  margin: 0 0 var(--space-3);
+  font-weight: 600;
+}
+
+.options {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.option:hover {
+  border-color: var(--color-primary);
+}
+
+/* The native control shows the state; the border and background only reinforce it. */
+.option:has(.input:checked) {
+  background: var(--color-option-selected-background);
+  border-color: var(--color-primary);
+  box-shadow: inset 0 0 0 1px var(--color-primary);
+}
+
+.option:has(.input:focus-visible) {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.input {
+  flex: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin: 0.1875rem 0 0;
+  accent-color: var(--color-primary);
+}
+
+/* The whole row shows the focus ring instead of the small control. */
+.input:focus-visible {
+  outline: none;
+}

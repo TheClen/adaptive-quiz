@@ -14,6 +14,8 @@
   "dependencies": {
     "@ai-in-learning/core": "workspace:*",
     "@ai-in-learning/shared-types": "workspace:*",
+    "@lezer/highlight": "1.2.5",
+    "@lezer/javascript": "1.5.6",
     "react": "19.3.1",
     "react-dom": "19.3.1"
   },

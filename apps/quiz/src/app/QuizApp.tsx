@@ -40,11 +40,25 @@ export function QuizApp({
       case "loadingQuestion":
         return <LoadingState message="Preparing your question…" />;
       case "answering":
-        return <Question question={state.question} />;
+        return (
+          <Question
+            key={state.question.position}
+            question={state.question}
+            onSubmit={awaitFeedbackScreen}
+          />
+        );
       case "error":
         return <ErrorState failure={state.failure} onRetry={retry} onHome={goHome} />;
     }
   }
+}
+
+/**
+ * Submitting a choice answer leads to the feedback screen, which arrives with
+ * T21. Until then a submitted answer stays on the question screen.
+ */
+function awaitFeedbackScreen(): void {
+  // Intentionally empty: the evaluation and the feedback screen are T21.
 }
 
 /** Changes whenever a new screen appears. */
