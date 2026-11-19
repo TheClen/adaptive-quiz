@@ -1,0 +1,69 @@
+.concepts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--space-5);
+  margin: 0 0 var(--space-6);
+}
+
+.list {
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-top-width: 4px;
+  border-radius: var(--radius);
+}
+
+/* The heading and its icon carry the meaning; the top border only reinforces it. */
+.list[data-correct="true"] {
+  border-top-color: var(--color-success);
+}
+
+.list[data-correct="false"] {
+  border-top-color: var(--color-error-border);
+}
+
+.listTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-large);
+}
+
+.listIcon {
+  flex: none;
+  font-size: 0.875em;
+}
+
+.list[data-correct="true"] .listIcon {
+  color: var(--color-success);
+}
+
+.list[data-correct="false"] .listIcon {
+  color: var(--color-error-border);
+}
+
+.items {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.items li + li {
+  margin-top: var(--space-1);
+}
+
+.empty {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.heading {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-large);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}

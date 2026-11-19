@@ -19,14 +19,14 @@ function renderFeedback({
   correct,
   levelChange = "none",
   level = 3,
-  withNext = true,
+  isLast = false,
 }: {
   readonly question: NextQuestionResponse & { readonly question: ChoiceQuestion };
   readonly selectedIds: readonly OptionId[];
   readonly correct: boolean;
   readonly levelChange?: LevelChange;
   readonly level?: Level;
-  readonly withNext?: boolean;
+  readonly isLast?: boolean;
 }) {
   const onNext = vi.fn<() => void>();
   const user = userEvent.setup();
@@ -37,7 +37,8 @@ function renderFeedback({
       correct={correct}
       levelChange={levelChange}
       level={level}
-      onNext={withNext ? onNext : null}
+      isLast={isLast}
+      onNext={onNext}
     />,
   );
   return { onNext, user, container };
@@ -140,9 +141,17 @@ describe("Feedback navigation", () => {
     expect(onNext).toHaveBeenCalledOnce();
   });
 
-  it('has no "Next question" after the last question', () => {
-    renderFeedback({ question: firstQuestion, selectedIds: ["b"], correct: true, withNext: false });
+  it('leads to the summary with "See your results" after the last question (AC-7.1)', async () => {
+    const { onNext, user } = renderFeedback({
+      question: firstQuestion,
+      selectedIds: ["b"],
+      correct: true,
+      isLast: true,
+    });
 
     expect(screen.queryByRole("button", { name: "Next question" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "See your results" }));
+
+    expect(onNext).toHaveBeenCalledOnce();
   });
 });
