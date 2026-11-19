@@ -7,6 +7,8 @@ import { createRoot } from "react-dom/client";
 import { createFetchApiClient } from "./api/client.js";
 import { ApiClientProvider } from "./app/ApiClientContext.js";
 import { QuizApp } from "./app/QuizApp.js";
+import { RunnerProvider } from "./app/RunnerContext.js";
+import { createRunnerClient } from "./runner/runnerClient.js";
 
 const container = document.getElementById("root");
 if (container === null) {
@@ -16,7 +18,9 @@ if (container === null) {
 createRoot(container).render(
   <StrictMode>
     <ApiClientProvider client={createFetchApiClient()}>
-      <QuizApp />
+      <RunnerProvider runner={createRunnerClient()}>
+        <QuizApp />
+      </RunnerProvider>
     </ApiClientProvider>
   </StrictMode>,
 );

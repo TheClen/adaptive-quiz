@@ -8,6 +8,9 @@ export default defineConfig({
   plugins: [react()],
   // Workspace packages resolve to their `src/` through the `source` condition.
   resolve: { conditions: ["source", ...defaultClientConditions] },
+  // The runner worker is a module worker. ES output keeps the QuickJS variants it never
+  // uses as separate chunks, instead of inlining them all into the worker (plan §9.2).
+  worker: { format: "es" },
   server: {
     // Same origin as in production, where Vercel rewrites `/api/*` (plan §14).
     proxy: { "/api": `http://localhost:${String(API_DEV_PORT)}` },
