@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "dev": "tsx watch --conditions=source --env-file-if-exists=.env src/dev.ts",
+    "sample-questions": "tsx --conditions=source --env-file-if-exists=.env scripts/sample-questions.ts",
     "lint": "eslint . && prettier --check . --ignore-path ../../.gitignore --ignore-path ../../.prettierignore",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
