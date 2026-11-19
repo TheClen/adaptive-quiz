@@ -6,7 +6,13 @@ import { describe, expect, it, vi } from "vitest";
 import { type ApiClient, ApiClientError, createFetchApiClient } from "../api/client.js";
 import { expectNoAxeViolations } from "../testing/axe.js";
 import { createFakeApiClient } from "../testing/fakeApiClient.js";
-import { firstQuestion, sessionWithThreeAnswers } from "../testing/fixtures.js";
+import {
+  firstQuestion,
+  lastQuestion,
+  secondQuestion,
+  sessionWithNineAnswers,
+  sessionWithThreeAnswers,
+} from "../testing/fixtures.js";
 import { ApiClientProvider } from "./ApiClientContext.js";
 import { errorContent } from "./errorMessages.js";
 import { type InitialQuizState, QuizApp } from "./QuizApp.js";
@@ -98,6 +104,133 @@ describe("QuizApp session start", () => {
     expectProgress("JavaScript", 1, 3);
     expect(document.activeElement).toBe(heading);
     await expectNoAxeViolations(container);
+  });
+});
+
+/** Starts a JavaScript session, shows question 1 and submits `answer`. */
+async function answerFirstQuestion(answer: string) {
+  const rendered = renderQuiz();
+  const { fake, user } = rendered;
+  await user.click(screen.getByRole("button", { name: "JavaScript" }));
+  await act(async () => {
+    fake.nextQuestionCalls[0]?.resolve(firstQuestion);
+    await Promise.resolve();
+  });
+  await user.click(screen.getByRole("radio", { name: answer }));
+  await user.click(screen.getByRole("button", { name: "Submit" }));
+  return rendered;
+}
+
+async function resolveCall(fake: ReturnType<typeof createFakeApiClient>, index: number) {
+  await act(async () => {
+    fake.nextQuestionCalls[index]?.resolve(secondQuestion);
+    await Promise.resolve();
+  });
+}
+
+describe("QuizApp feedback", () => {
+  it("shows the feedback of a correct answer, focused, with the level up (AC-6.1, AC-4.4)", async () => {
+    const { container } = await answerFirstQuestion("2");
+
+    const heading = screen.getByRole("heading", { level: 1, name: "Correct" });
+    expect(document.activeElement).toBe(heading);
+    expect(screen.getByText(firstQuestion.question.explanation)).toBeDefined();
+    expect(screen.getByRole("status").textContent).toBe("↑Level up: 4/5");
+    expectProgress("JavaScript", 1, 4);
+    await expectNoAxeViolations(container);
+  });
+
+  it("shows the feedback of a wrong answer with the level down (AC-6.1, AC-4.4)", async () => {
+    await answerFirstQuestion("undefined");
+
+    expect(screen.getByRole("heading", { level: 1, name: "Incorrect" })).toBeDefined();
+    expect(screen.getByRole("status").textContent).toBe("↓Level down: 2/5");
+    expectProgress("JavaScript", 1, 2);
+  });
+});
+
+describe("QuizApp prefetch", () => {
+  it("requests the next question with the answer as soon as it is evaluated (plan §12)", async () => {
+    const { fake } = await answerFirstQuestion("2");
+
+    expect(fake.nextQuestionCalls).toHaveLength(2);
+    const state = fake.nextQuestionCalls[1]?.request.state;
+    expect(state?.seed).toBe(fake.nextQuestionCalls[0]?.request.state.seed);
+    expect(state?.answers).toEqual([
+      { kind: "single", conceptId: "closures", correct: true, stem: firstQuestion.question.prompt },
+    ]);
+  });
+
+  it('shows the prefetched question at once on "Next question", focused (AC-6.4, NFR-3)', async () => {
+    const { fake, user } = await answerFirstQuestion("2");
+    await resolveCall(fake, 1);
+
+    await user.click(screen.getByRole("button", { name: "Next question" }));
+
+    const heading = screen.getByRole("heading", { level: 1, name: "Question 2" });
+    expect(document.activeElement).toBe(heading);
+    expect(screen.getByText(secondQuestion.question.prompt)).toBeDefined();
+    expectProgress("JavaScript", 2, 4);
+    // One request per question: the prefetch was the request for question 2.
+    expect(fake.nextQuestionCalls).toHaveLength(2);
+  });
+
+  it('shows the loading state on "Next question" until the prefetch arrives (AC-6.4, NFR-1)', async () => {
+    const { fake, user, container } = await answerFirstQuestion("2");
+
+    await user.click(screen.getByRole("button", { name: "Next question" }));
+
+    expect(screen.getByRole("status").textContent).toBe("Preparing your question…");
+    expectProgress("JavaScript", 2, 4);
+    await expectNoAxeViolations(container);
+
+    await resolveCall(fake, 1);
+
+    expect(screen.getByRole("heading", { level: 1, name: "Question 2" })).toBeDefined();
+    expect(fake.nextQuestionCalls).toHaveLength(2);
+  });
+
+  it('shows a prefetch error on "Next question", and Retry resends the same state (AC-8.1)', async () => {
+    const { fake, user } = await answerFirstQuestion("2");
+    await act(async () => {
+      fake.nextQuestionCalls[1]?.reject(new ApiClientError({ code: "ai_unavailable" }));
+      await Promise.resolve();
+    });
+
+    // The failure waits: the visitor keeps reading the feedback.
+    expect(screen.getByRole("heading", { level: 1, name: "Correct" })).toBeDefined();
+    expect(screen.queryByRole("alert")).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Next question" }));
+
+    const content = errorContent({ code: "ai_unavailable" });
+    expect(screen.getByRole("heading", { level: 1, name: content.title })).toBeDefined();
+    expectProgress("JavaScript", 2, 4);
+
+    await user.click(screen.getByRole("button", { name: "Retry" }));
+
+    expect(fake.nextQuestionCalls).toHaveLength(3);
+    expect(fake.nextQuestionCalls[2]?.request).toEqual(fake.nextQuestionCalls[1]?.request);
+    await resolveCall(fake, 2);
+    expect(screen.getByRole("heading", { level: 1, name: "Question 2" })).toBeDefined();
+  });
+
+  it("prefetches nothing after the 10th answer (NFR-3)", async () => {
+    const { fake, user } = renderQuiz({
+      initialState: {
+        screen: "answering",
+        session: sessionWithNineAnswers,
+        question: lastQuestion,
+      },
+    });
+
+    await user.click(screen.getByRole("radio", { name: "2" }));
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+
+    expect(screen.getByRole("heading", { level: 1, name: "Correct" })).toBeDefined();
+    expectProgress("JavaScript", 10, 5);
+    expect(screen.queryByRole("button", { name: "Next question" })).toBeNull();
+    expect(fake.nextQuestionCalls).toHaveLength(0);
   });
 });
 

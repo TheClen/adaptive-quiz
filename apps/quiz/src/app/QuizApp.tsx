@@ -1,15 +1,31 @@
+import { levelChange, levelHistory, START_LEVEL } from "@ai-in-learning/core";
 import { type RefObject, useEffect, useRef } from "react";
 
 import { LoadingState } from "../components/LoadingState.js";
 import { SessionHeader } from "../components/SessionHeader.js";
 import { ErrorState } from "../screens/ErrorState.js";
+import { Feedback } from "../screens/Feedback.js";
 import { Home } from "../screens/Home.js";
 import { Question } from "../screens/Question.js";
-import { initialQuizState, type QuizState, sessionProgress } from "./sessionReducer.js";
+import {
+  initialQuizState,
+  type NextQuestion,
+  type QuizState,
+  sessionProgress,
+} from "./sessionReducer.js";
 import { useQuizSession } from "./useQuizSession.js";
 
-/** States the quiz can open on. A loading state would never send its request. */
-export type InitialQuizState = Exclude<QuizState, { readonly screen: "loadingQuestion" }>;
+type FeedbackState = Extract<QuizState, { readonly screen: "feedback" }>;
+
+/**
+ * States the quiz can open on. A loading state, or a feedback screen waiting for
+ * its prefetch, would never send its request.
+ */
+export type InitialQuizState =
+  | Exclude<QuizState, { readonly screen: "loadingQuestion" } | FeedbackState>
+  | (FeedbackState & {
+      readonly next: Exclude<NextQuestion, { readonly status: "pending" }>;
+    });
 
 /**
  * The quiz: one page, no router. The session reducer decides the screen
@@ -21,7 +37,7 @@ export function QuizApp({
   /** The state to open on. The app opens on the home screen; tests open on others. */
   readonly initialState?: InitialQuizState;
 }) {
-  const { state, start, retry, goHome } = useQuizSession(initialState);
+  const { state, start, submitAnswer, next, retry, goHome } = useQuizSession(initialState);
   const progress = sessionProgress(state);
   const main = useRef<HTMLElement>(null);
   useFocusOnScreenChange(main, screenKey(state));
@@ -44,27 +60,33 @@ export function QuizApp({
           <Question
             key={state.question.position}
             question={state.question}
-            onSubmit={awaitFeedbackScreen}
+            onSubmit={submitAnswer}
           />
         );
+      case "feedback": {
+        const { answers } = state.session;
+        return (
+          <Feedback
+            question={state.question}
+            selectedIds={state.selectedIds}
+            correct={answers.at(-1)?.correct ?? false}
+            levelChange={levelChange(answers)}
+            level={levelHistory(answers).at(-1) ?? START_LEVEL}
+            // The summary after the last question arrives with T22.
+            onNext={state.next.status === "none" ? null : next}
+          />
+        );
+      }
       case "error":
         return <ErrorState failure={state.failure} onRetry={retry} onHome={goHome} />;
     }
   }
 }
 
-/**
- * Submitting a choice answer leads to the feedback screen, which arrives with
- * T21. Until then a submitted answer stays on the question screen.
- */
-function awaitFeedbackScreen(): void {
-  // Intentionally empty: the evaluation and the feedback screen are T21.
-}
-
 /** Changes whenever a new screen appears. */
 function screenKey(state: QuizState): string {
-  return state.screen === "answering"
-    ? `answering:${String(state.question.position)}`
+  return state.screen === "answering" || state.screen === "feedback"
+    ? `${state.screen}:${String(state.question.position)}`
     : state.screen;
 }
 

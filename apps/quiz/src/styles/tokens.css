@@ -18,6 +18,8 @@
   --color-error-background: #fdeeec;
   --color-error-border: #b42318;
   --color-option-selected-background: #e8eefc;
+  --color-success: #116329;
+  --color-success-background: #edf7ef;
 
   /* Code snippets: every token colour reaches at least 4.5:1 on the code background. */
   --color-code-background: #efefe9;
