@@ -7,6 +7,9 @@ coverage/
 .turbo/
 .vercel/
 
+# Question samples of quality gate M1 (apps/api/scripts/sample-questions.ts)
+apps/api/samples/
+
 # Environment variables (see .env.example)
 .env
 .env.*
