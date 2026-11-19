@@ -40,3 +40,58 @@ export const sessionWithThreeAnswers = {
     { kind: "single", conceptId: "promises", correct: false, stem: "In what order do these log?" },
   ],
 } satisfies SessionState;
+
+/** A multiple-choice React question with a JSX snippet. */
+export const multipleChoiceQuestion = {
+  position: 2,
+  level: 3,
+  conceptId: "jsx-and-rendering",
+  conceptLabel: "JSX and rendering",
+  question: {
+    kind: "multiple",
+    prompt: "Which values are good keys for these list items?",
+    snippet: {
+      language: "jsx",
+      source: [
+        "function TodoList({ todos }) {",
+        "  return (",
+        "    <ul>",
+        "      {todos.map((todo) => (",
+        '        <li key={todo.id} className="todo">{todo.title}</li>',
+        "      ))}",
+        "    </ul>",
+        "  );",
+        "}",
+      ].join("\n"),
+    },
+    options: [
+      { id: "a", text: "todo.id" },
+      { id: "b", text: "Math.random()" },
+      { id: "c", text: "A slug unique among the todos" },
+      { id: "d", text: "The index, when the list is reordered" },
+    ],
+    correctOptionIds: ["a", "c"],
+    explanation: "A key must be stable and unique among siblings.",
+  },
+} satisfies NextQuestionResponse;
+
+/** A single-choice JavaScript question with a snippet. */
+export const singleChoiceWithSnippet = {
+  ...firstQuestion,
+  question: {
+    ...firstQuestion.question,
+    snippet: {
+      language: "javascript",
+      source: [
+        "// Counts the calls",
+        "function makeCounter() {",
+        "  let count = 0;",
+        "  return () => ++count;",
+        "}",
+        "const counter = makeCounter();",
+        "counter();",
+        'console.log(counter(), "calls", true);',
+      ].join("\n"),
+    },
+  },
+} satisfies NextQuestionResponse;

@@ -1,0 +1,19 @@
+.submit {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.hint {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+/* Inert but still visible and focusable: the hint says what is missing. */
+.submit [aria-disabled="true"],
+.submit [aria-disabled="true"]:hover {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
