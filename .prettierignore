@@ -4,3 +4,6 @@ pnpm-lock.yaml
 # Hand-written, approved documents: their formatting is part of the review
 docs/
 specs/
+
+# Third-party Claude Code skills, kept verbatim from their source
+.claude/skills/
