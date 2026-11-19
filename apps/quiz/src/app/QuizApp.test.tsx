@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 import { type ApiClient, ApiClientError, createFetchApiClient } from "../api/client.js";
 import { expectNoAxeViolations } from "../testing/axe.js";
 import { createFakeApiClient } from "../testing/fakeApiClient.js";
+import { createFakeRunner } from "../testing/fakeRunner.js";
 import {
   firstQuestion,
   lastQuestion,
@@ -16,19 +17,23 @@ import {
 import { ApiClientProvider } from "./ApiClientContext.js";
 import { errorContent } from "./errorMessages.js";
 import { type InitialQuizState, QuizApp } from "./QuizApp.js";
+import { RunnerProvider } from "./RunnerContext.js";
 
 function renderQuiz(
   options: { readonly client?: ApiClient; readonly initialState?: InitialQuizState } = {},
 ) {
   const fake = createFakeApiClient();
+  const fakeRunner = createFakeRunner();
   const client = options.client ?? fake.client;
   const user = userEvent.setup();
   const { container } = render(
     <ApiClientProvider client={client}>
-      <QuizApp {...(options.initialState ? { initialState: options.initialState } : {})} />
+      <RunnerProvider runner={fakeRunner.runner}>
+        <QuizApp {...(options.initialState ? { initialState: options.initialState } : {})} />
+      </RunnerProvider>
     </ApiClientProvider>,
   );
-  return { fake, user, container };
+  return { fake, fakeRunner, user, container };
 }
 
 /** A fetch client whose every request gets `response`. */
@@ -87,6 +92,15 @@ describe("QuizApp session start", () => {
     const state = fake.nextQuestionCalls[0]?.request.state;
     expect(state).toMatchObject({ version: 1, topic: "javascript", answers: [] });
     expect(Number.isInteger(state?.seed)).toBe(true);
+  });
+
+  it("starts the code runner only when a session starts (plan §9.2)", async () => {
+    const { fakeRunner, user } = renderQuiz();
+    expect(fakeRunner.preloads()).toBe(0);
+
+    await user.click(screen.getByRole("button", { name: "JavaScript" }));
+
+    expect(fakeRunner.preloads()).toBe(1);
   });
 
   it("then shows question 1 with the session header, and focuses its heading", async () => {

@@ -3,6 +3,7 @@ import { useEffect, useReducer, useRef } from "react";
 
 import { toRequestFailure } from "../api/client.js";
 import { useApiClient } from "./ApiClientContext.js";
+import { useRunner } from "./RunnerContext.js";
 import {
   createSeed,
   initialQuizState,
@@ -16,7 +17,10 @@ import {
 
 export interface QuizSession {
   readonly state: QuizState;
-  /** Starts a new session on `topic` and requests its first question. */
+  /**
+   * Starts a new session on `topic` and requests its first question. Also starts the
+   * code runner, so QuickJS is loaded before the first exercise (plan §9.2).
+   */
   readonly start: (topic: TopicId) => void;
   /**
    * Evaluates a choice answer, shows its feedback and prefetches the next
@@ -42,6 +46,7 @@ export interface QuizSession {
  */
 export function useQuizSession(initialState: QuizState = initialQuizState): QuizSession {
   const api = useApiClient();
+  const runner = useRunner();
   const [state, dispatch] = useReducer(quizReducer, initialState);
   const lastRequestId = useRef(0);
   const inFlight = useRef<AbortController | null>(null);
@@ -78,6 +83,7 @@ export function useQuizSession(initialState: QuizState = initialQuizState): Quiz
       const requestId = ++lastRequestId.current;
       dispatch({ type: "start", session, requestId });
       requestQuestion(session, requestId);
+      runner.preload();
     },
     submitAnswer(selectedIds) {
       if (state.screen !== "answering" || !isChoiceQuestion(state.question)) {
