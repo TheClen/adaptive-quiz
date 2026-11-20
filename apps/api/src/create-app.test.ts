@@ -7,7 +7,7 @@ import {
 import { ApiError, type ErrorCode } from "@ai-in-learning/shared-types";
 import { describe, expect, it } from "vitest";
 
-import { type App, BODY_LIMIT_BYTES, createApp } from "./app.js";
+import { type App, BODY_LIMIT_BYTES, createApp } from "./create-app.js";
 import { loadEnv } from "./env.js";
 import { ApiFailure, ERROR_CATALOGUE } from "./http/errors.js";
 import type { RequestLogLine } from "./http/logging.js";
