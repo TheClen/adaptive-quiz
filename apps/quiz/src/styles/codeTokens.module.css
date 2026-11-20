@@ -1,0 +1,41 @@
+/*
+ * Syntax highlighting colours, shared by read-only snippets and the code editor so
+ * both highlight the same way (plan §9.5). They read the `tok-*` classes that
+ * `classHighlighter` from `@lezer/highlight` puts on tokens. Every colour reaches at
+ * least 4.5:1 on --color-code-background. Highlighting only helps reading: no
+ * meaning depends on it.
+ */
+.tokens :global(.tok-keyword) {
+  color: var(--color-code-keyword);
+}
+
+.tokens :global(.tok-string),
+.tokens :global(.tok-string2) {
+  color: var(--color-code-string);
+}
+
+.tokens :global(.tok-number),
+.tokens :global(.tok-bool),
+.tokens :global(.tok-atom) {
+  color: var(--color-code-literal);
+}
+
+.tokens :global(.tok-comment) {
+  color: var(--color-code-comment);
+  font-style: italic;
+}
+
+.tokens :global(.tok-definition) {
+  color: var(--color-code-definition);
+}
+
+.tokens :global(.tok-propertyName),
+.tokens :global(.tok-attributeName) {
+  color: var(--color-code-property);
+}
+
+.tokens :global(.tok-typeName),
+.tokens :global(.tok-className),
+.tokens :global(.tok-tagName) {
+  color: var(--color-code-type);
+}

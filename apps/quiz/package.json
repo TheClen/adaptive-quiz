@@ -14,6 +14,11 @@
   "dependencies": {
     "@ai-in-learning/core": "workspace:*",
     "@ai-in-learning/shared-types": "workspace:*",
+    "@codemirror/commands": "6.11.1",
+    "@codemirror/lang-javascript": "6.2.5",
+    "@codemirror/language": "6.13.1",
+    "@codemirror/state": "6.7.6",
+    "@codemirror/view": "6.43.15",
     "@lezer/highlight": "1.2.5",
     "@lezer/javascript": "1.5.6",
     "react": "19.3.1",

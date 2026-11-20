@@ -1,0 +1,59 @@
+/* Token colours come from the shared code tokens. */
+.field {
+  margin: 0 0 var(--space-5);
+}
+
+.label {
+  margin-bottom: var(--space-2);
+  font-weight: 600;
+}
+
+.editor {
+  composes: tokens from "../styles/codeTokens.module.css";
+}
+
+/*
+ * The CodeMirror selectors go through `.editor` so they outrank CodeMirror's base
+ * theme, which uses a single generated class.
+ */
+.editor :global(.cm-editor) {
+  background: var(--color-code-background);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  font-size: var(--font-size-code);
+}
+
+/* The design-system focus ring, in place of CodeMirror's dotted outline (plan §13.3). */
+.editor :global(.cm-editor.cm-focused) {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.editor :global(.cm-scroller) {
+  min-height: 12rem;
+  max-height: 32rem;
+  font-family: var(--font-mono);
+  line-height: var(--line-height-code);
+}
+
+.editor :global(.cm-content) {
+  padding: var(--space-3) 0;
+}
+
+.editor :global(.cm-gutters) {
+  background: var(--color-code-background);
+  border-right: var(--border-width) solid var(--color-code-border);
+  border-radius: var(--radius) 0 0 var(--radius);
+  color: var(--color-text-muted);
+}
+
+.editor :global(.cm-content[aria-readonly="true"]) {
+  cursor: default;
+}
+
+.hint {
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
