@@ -1,0 +1,19 @@
+.heading {
+  margin: var(--space-6) 0 var(--space-3);
+  font-size: var(--font-size-large);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* Inert while tests run, but still visible and focusable. */
+.actions > [aria-disabled="true"],
+.actions > [aria-disabled="true"]:hover {
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+  cursor: progress;
+}

@@ -1,18 +1,27 @@
-import type { OptionId, SessionState, TopicId } from "@ai-in-learning/shared-types";
+import type { TestResult } from "@ai-in-learning/core/runner";
+import type {
+  CodeReviewRequest,
+  OptionId,
+  SessionState,
+  TopicId,
+} from "@ai-in-learning/shared-types";
 import { useEffect, useReducer, useRef } from "react";
 
 import { toRequestFailure } from "../api/client.js";
 import { useApiClient } from "./ApiClientContext.js";
 import { useRunner } from "./RunnerContext.js";
 import {
+  codeReviewRequest,
   createSeed,
   initialQuizState,
   isChoiceQuestion,
+  isCodeQuestion,
   isComplete,
   newSession,
   quizReducer,
   type QuizState,
   withChoiceAnswer,
+  withCodeAnswer,
 } from "./sessionReducer.js";
 
 export interface QuizSession {
@@ -27,6 +36,14 @@ export interface QuizSession {
    * question (plan §12).
    */
   readonly submitAnswer: (selectedIds: readonly OptionId[]) => void;
+  /**
+   * Records a code answer with the results of its final run (AC-3.3), shows its
+   * feedback, prefetches the next question and requests the review: one per
+   * submission (NFR-3).
+   */
+  readonly submitCode: (code: string, testResults: readonly TestResult[]) => void;
+  /** Requests the review of the submission again after it failed (plan §10). */
+  readonly retryReview: () => void;
   /** Shows the prefetched question, or the loading state while it is on its way (AC-6.4). */
   readonly next: () => void;
   /** Resends the failed step with the same session (AC-8.1). */
@@ -50,13 +67,38 @@ export function useQuizSession(initialState: QuizState = initialQuizState): Quiz
   const [state, dispatch] = useReducer(quizReducer, initialState);
   const lastRequestId = useRef(0);
   const inFlight = useRef<AbortController | null>(null);
+  const reviewInFlight = useRef<AbortController | null>(null);
 
   useEffect(
     () => () => {
       inFlight.current?.abort();
+      reviewInFlight.current?.abort();
     },
     [],
   );
+
+  function abortReview(): void {
+    reviewInFlight.current?.abort();
+    reviewInFlight.current = null;
+  }
+
+  function requestReview(request: CodeReviewRequest, requestId: number): void {
+    abortReview();
+    const controller = new AbortController();
+    reviewInFlight.current = controller;
+    api.codeReview(request, { signal: controller.signal }).then(
+      ({ review }) => {
+        if (!controller.signal.aborted) {
+          dispatch({ type: "reviewLoaded", requestId, review });
+        }
+      },
+      () => {
+        if (!controller.signal.aborted) {
+          dispatch({ type: "reviewFailed", requestId });
+        }
+      },
+    );
+  }
 
   function requestQuestion(session: SessionState, requestId: number): void {
     inFlight.current?.abort();
@@ -97,7 +139,30 @@ export function useQuizSession(initialState: QuizState = initialQuizState): Quiz
         requestQuestion(session, requestId);
       }
     },
+    submitCode(code, testResults) {
+      if (state.screen !== "answering" || !isCodeQuestion(state.question)) {
+        return;
+      }
+      const session = withCodeAnswer(state.session, state.question, testResults);
+      const requestId = isComplete(session) ? null : ++lastRequestId.current;
+      const reviewRequestId = ++lastRequestId.current;
+      dispatch({ type: "codeAnswered", session, code, testResults, requestId, reviewRequestId });
+      if (requestId !== null) {
+        requestQuestion(session, requestId);
+      }
+      requestReview(codeReviewRequest(state.session, state.question, code), reviewRequestId);
+    },
+    retryReview() {
+      if (state.screen !== "codeFeedback" || state.review.status !== "failed") {
+        return;
+      }
+      const requestId = ++lastRequestId.current;
+      dispatch({ type: "retryReview", requestId });
+      requestReview(codeReviewRequest(state.session, state.question, state.code), requestId);
+    },
     next() {
+      // A review still on its way is no longer shown.
+      abortReview();
       dispatch({ type: "next" });
     },
     retry() {
@@ -111,6 +176,7 @@ export function useQuizSession(initialState: QuizState = initialQuizState): Quiz
     goHome() {
       inFlight.current?.abort();
       inFlight.current = null;
+      abortReview();
       dispatch({ type: "goHome" });
     },
   };

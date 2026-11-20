@@ -1,0 +1,56 @@
+.panel {
+  margin: var(--space-6) 0;
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.heading {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-large);
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.spinner {
+  composes: spinner from "./LoadingState.module.css";
+}
+
+.message {
+  margin: 0 0 var(--space-3);
+}
+
+.summary {
+  margin: 0 0 var(--space-3);
+}
+
+.comments {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  list-style: none;
+}
+
+.comment {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.aspect {
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.notice {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}

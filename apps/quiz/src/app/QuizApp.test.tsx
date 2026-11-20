@@ -1,3 +1,4 @@
+import type { TestResult } from "@ai-in-learning/core/runner";
 import { type ApiError, ErrorCode } from "@ai-in-learning/shared-types";
 import { act, render, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
@@ -8,8 +9,12 @@ import { expectNoAxeViolations } from "../testing/axe.js";
 import { createFakeApiClient } from "../testing/fakeApiClient.js";
 import { createFakeRunner } from "../testing/fakeRunner.js";
 import {
+  codeQuestion,
+  failingResults,
   firstQuestion,
   lastQuestion,
+  negativeReview,
+  passingResults,
   secondQuestion,
   sessionWithNineAnswers,
   sessionWithThreeAnswers,
@@ -245,6 +250,145 @@ describe("QuizApp prefetch", () => {
     expectProgress("JavaScript", 10, 5);
     expect(screen.queryByRole("button", { name: "Next question" })).toBeNull();
     expect(fake.nextQuestionCalls).toHaveLength(0);
+  });
+});
+
+/** Opens on the exercise at position 4, submits the starter code and settles its final run. */
+async function submitCodeExercise(results: readonly TestResult[]) {
+  const rendered = renderQuiz({
+    initialState: { screen: "answering", session: sessionWithThreeAnswers, question: codeQuestion },
+  });
+  const { fakeRunner, user } = rendered;
+  await user.click(screen.getByRole("button", { name: "Submit" }));
+  await act(async () => {
+    fakeRunner.runs[0]?.resolve(results);
+    await Promise.resolve();
+  });
+  return rendered;
+}
+
+function reviewPanel() {
+  return within(screen.getByRole("region", { name: "AI review" }));
+}
+
+describe("QuizApp code exercise", () => {
+  it("shows the exercise with its editor and tests, focused (AC-3.1)", async () => {
+    const { container } = renderQuiz({
+      initialState: {
+        screen: "answering",
+        session: sessionWithThreeAnswers,
+        question: codeQuestion,
+      },
+    });
+
+    expect(screen.getByRole("heading", { level: 1, name: "Question 4" })).toBeDefined();
+    expect(screen.getByRole("textbox", { name: "Your solution" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Run tests" })).toBeDefined();
+    expectProgress("JavaScript", 4, 4);
+    await expectNoAxeViolations(container);
+  });
+
+  it("records the verdict from the final run and shows the feedback at once (AC-3.3, AC-6.2)", async () => {
+    const { fake, container } = await submitCodeExercise(passingResults);
+
+    const heading = screen.getByRole("heading", { level: 1, name: "Correct" });
+    expect(document.activeElement).toBe(heading);
+    expectProgress("JavaScript", 4, 5);
+    expect(screen.getByText("All 3 tests passed")).toBeDefined();
+    expect(screen.getByRole("textbox", { name: "Reference solution" })).toBeDefined();
+    expect(reviewPanel().getByText("Reviewing your code…")).toBeDefined();
+    await expectNoAxeViolations(container);
+
+    // The answer is recorded from the tests and sent with the prefetch (plan §12).
+    expect(fake.nextQuestionCalls).toHaveLength(1);
+    expect(fake.nextQuestionCalls[0]?.request.state.answers.at(-1)).toEqual({
+      kind: "code",
+      conceptId: "array-methods",
+      correct: true,
+      stem: codeQuestion.question.prompt,
+    });
+  });
+
+  it("records a failed test as an incorrect answer (AC-3.3)", async () => {
+    const { fake } = await submitCodeExercise(failingResults);
+
+    expect(screen.getByRole("heading", { level: 1, name: "Incorrect" })).toBeDefined();
+    expectProgress("JavaScript", 4, 3);
+    expect(fake.nextQuestionCalls[0]?.request.state.answers.at(-1)?.correct).toBe(false);
+  });
+
+  it("sends one review request per submission, with domain data only (NFR-3, plan §7.2)", async () => {
+    const { fake } = await submitCodeExercise(passingResults);
+
+    expect(fake.codeReviewCalls).toHaveLength(1);
+    expect(fake.codeReviewCalls[0]?.request).toEqual({
+      topic: "javascript",
+      conceptId: "array-methods",
+      level: 4,
+      exercise: codeQuestion.question,
+      code: codeQuestion.question.starterCode,
+    });
+  });
+
+  it('keeps "Correct" when the review says the code is wrong on passing tests (AC-6.3)', async () => {
+    const { fake } = await submitCodeExercise(passingResults);
+
+    await act(async () => {
+      fake.codeReviewCalls[0]?.resolve(negativeReview);
+      await Promise.resolve();
+    });
+
+    expect(reviewPanel().getByText(negativeReview.review.summary)).toBeDefined();
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Correct");
+    expectProgress("JavaScript", 4, 5);
+  });
+
+  it("shows a failed review with Retry, which sends it again (plan §10)", async () => {
+    const { fake, user } = await submitCodeExercise(passingResults);
+
+    await act(async () => {
+      fake.codeReviewCalls[0]?.reject(new ApiClientError({ code: "ai_unavailable" }));
+      await Promise.resolve();
+    });
+
+    expect(reviewPanel().getByText("The AI review is unavailable.")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Next question" })).toBeDefined();
+
+    await user.click(reviewPanel().getByRole("button", { name: "Retry" }));
+
+    expect(reviewPanel().getByText("Reviewing your code…")).toBeDefined();
+    expect(fake.codeReviewCalls).toHaveLength(2);
+    expect(fake.codeReviewCalls[1]?.request).toEqual(fake.codeReviewCalls[0]?.request);
+
+    await act(async () => {
+      fake.codeReviewCalls[1]?.resolve(negativeReview);
+      await Promise.resolve();
+    });
+    expect(reviewPanel().getByText(negativeReview.review.summary)).toBeDefined();
+  });
+
+  it('does not let a failed review block "Next question" (plan §10)', async () => {
+    const { fake, user } = await submitCodeExercise(passingResults);
+    await act(async () => {
+      fake.codeReviewCalls[0]?.reject(new ApiClientError({ code: "internal" }));
+      fake.nextQuestionCalls[0]?.resolve({ ...secondQuestion, position: 5, level: 5 });
+      await Promise.resolve();
+    });
+
+    await user.click(screen.getByRole("button", { name: "Next question" }));
+
+    expect(screen.getByRole("heading", { level: 1, name: "Question 5" })).toBeDefined();
+    expect(fake.codeReviewCalls).toHaveLength(1);
+  });
+
+  it("moves on while the review is pending, and drops it (AC-6.4)", async () => {
+    const { fake, user } = await submitCodeExercise(passingResults);
+
+    await user.click(screen.getByRole("button", { name: "Next question" }));
+
+    expect(screen.getByRole("status").textContent).toBe("Preparing your question…");
+    expect(fake.codeReviewCalls[0]?.signal?.aborted).toBe(true);
+    expect(fake.codeReviewCalls).toHaveLength(1);
   });
 });
 

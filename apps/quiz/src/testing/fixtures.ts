@@ -1,7 +1,12 @@
 /**
  * Fixtures for the quiz tests. Not imported by the app, so never bundled.
  */
-import type { NextQuestionResponse, SessionState } from "@ai-in-learning/shared-types";
+import type { TestResult } from "@ai-in-learning/core/runner";
+import type {
+  CodeReviewResponse,
+  NextQuestionResponse,
+  SessionState,
+} from "@ai-in-learning/shared-types";
 
 /** The first question of a JavaScript session. */
 export const firstQuestion = {
@@ -178,3 +183,70 @@ export const perfectSession = {
     stem: `Question ${String(index + 1)}`,
   })),
 } satisfies SessionState;
+
+/** A JavaScript code exercise at position 4, the first code slot of the schedule. */
+export const codeQuestion = {
+  position: 4,
+  level: 4,
+  conceptId: "array-methods",
+  conceptLabel: "Array methods",
+  question: {
+    kind: "code",
+    prompt: "Write `sum(numbers)` that returns the sum of an array of numbers.",
+    functionName: "sum",
+    starterCode: "function sum(numbers) {\n  // Your code here\n}",
+    tests: [
+      {
+        id: "t1",
+        description: "Sums three numbers",
+        args: [[1, 2, 3]],
+        expected: 6,
+        checksImmutability: false,
+      },
+      {
+        id: "t2",
+        description: "Returns 0 for an empty array",
+        args: [[]],
+        expected: 0,
+        checksImmutability: false,
+      },
+      {
+        id: "t3",
+        description: "Does not change its input",
+        args: [[4, 5]],
+        expected: 9,
+        checksImmutability: true,
+      },
+    ],
+    referenceSolution:
+      "function sum(numbers) {\n  return numbers.reduce((total, n) => total + n, 0);\n}",
+    explanation: "`reduce` with an initial value of 0 also handles the empty array.",
+    exerciseToken: "c2lnbmF0dXJl",
+  },
+} satisfies NextQuestionResponse;
+
+/** Results of {@link codeQuestion} where every test passes. */
+export const passingResults = [
+  { testId: "t1", passed: true },
+  { testId: "t2", passed: true },
+  { testId: "t3", passed: true },
+] as const satisfies readonly TestResult[];
+
+/** Results of {@link codeQuestion} where the empty-array test fails. */
+export const failingResults = [
+  { testId: "t1", passed: true },
+  { testId: "t2", passed: false, reason: "Expected 0 but got undefined" },
+  { testId: "t3", passed: true },
+] as const satisfies readonly TestResult[];
+
+/** A review that calls the code wrong, to check that it never changes the verdict (AC-6.3). */
+export const negativeReview = {
+  review: {
+    summary: "This solution is wrong: it does not compute the sum.",
+    comments: [
+      { aspect: "correctness", text: "The loop skips the last element." },
+      { aspect: "readability", text: "Name the accumulator `total` rather than `t`." },
+      { aspect: "idiomatic", text: "`reduce` expresses a sum more directly than a `for` loop." },
+    ],
+  },
+} satisfies CodeReviewResponse;
