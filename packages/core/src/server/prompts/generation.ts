@@ -67,6 +67,7 @@ function choiceRules(topic: TopicId, kind: "single" | "multiple"): string {
     'Option texts are distinct. Never use "all of the above" or "none of the above".',
     "For each option, write a one-sentence rationale that says why it is correct or wrong.",
     snippet,
+    "With a snippet, write the snippet first, then a question about that exact snippet: every variable, function and call the question names appears in the snippet.",
   ];
   return kind === "single"
     ? section(

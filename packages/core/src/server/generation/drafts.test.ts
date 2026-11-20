@@ -16,8 +16,14 @@ describe("ChoiceDraft", () => {
     expect(format.type).toBe("json_schema");
     expect(format.schema).toMatchObject({
       type: "object",
-      required: ["prompt", "snippet", "options", "explanation"],
+      required: ["snippet", "prompt", "options", "explanation"],
     });
+  });
+
+  it("puts the snippet before the question, so the question is written about the final code", () => {
+    const { properties } = zodOutputFormat(ChoiceDraft).schema as { properties: object };
+
+    expect(Object.keys(properties)).toEqual(["snippet", "prompt", "options", "explanation"]);
   });
 
   it("parses the valid fixtures", () => {
