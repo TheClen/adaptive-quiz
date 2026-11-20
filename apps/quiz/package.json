@@ -10,7 +10,8 @@
     "lint": "eslint . && prettier --check . --ignore-path ../../.gitignore --ignore-path ../../.prettierignore",
     "preview": "vite preview",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p scripts"
+    "test:e2e": "playwright test -c e2e/playwright.config.ts",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p scripts && tsc --noEmit -p e2e"
   },
   "dependencies": {
     "@ai-in-learning/core": "workspace:*",
@@ -26,6 +27,8 @@
     "react-dom": "19.3.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@playwright/test": "1.65.0",
     "@testing-library/dom": "10.4.2",
     "@testing-library/react": "16.3.3",
     "@testing-library/user-event": "14.6.8",
