@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://ai-in-learning-api-the-clen.vercel.app/api/:path*"
+      "destination": "https://ai-in-learning-api.vercel.app/api/:path*"
     }
   ],
   "headers": [
