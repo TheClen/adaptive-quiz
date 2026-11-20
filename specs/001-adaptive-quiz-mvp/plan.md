@@ -1,6 +1,6 @@
 # Plan 001 — Adaptive quiz (MVP)
 
-- Status: Approved (2026-11-17), §1, §3 and §4 amended and approved (2026-11-17)
+- Status: Approved (2026-11-17), §1, §3 and §4 amended and approved (2026-11-17), §14 amended and approved (2026-11-20)
 - Date: 2026-11-17
 - Constitution: 1.0.0
 - Spec: [spec.md](spec.md) (Approved 2026-11-17)
@@ -550,9 +550,10 @@ sequenceDiagram
 | --- | --- | --- |
 | Vercel Root Directory | `apps/quiz` | `apps/api` |
 | Framework preset | Vite (static output) | Hono (Vercel Functions, Node.js runtime) |
-| Ignored Build Step | `npx turbo-ignore` | `npx turbo-ignore` |
+| Ignored Build Step | None (automatic skipping) | None (automatic skipping) |
 | Environment variables | None | `ANTHROPIC_API_KEY`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `QUIZ_SIGNING_SECRET` |
 
+- **Skipping unaffected builds.** Vercel skips the build of a monorepo project that a commit does not affect. The repository meets the requirements: it is on GitHub, uses pnpm workspaces, gives every package a unique name and declares its workspace dependencies in each `package.json`. `turbo-ignore` is not used: Turborepo has deprecated it in favour of `turbo query affected`. If automatic skipping does not work, the fallback Ignored Build Step is `npx turbo@<version in package.json> query affected --base=$VERCEL_GIT_PREVIOUS_SHA --packages @ai-in-learning/<app> --exit-code`.
 - **Rewrite.** `apps/quiz/vercel.json` rewrites `/api/:path*` to the API project's production domain. Browsers see one origin, so no CORS (ADR 0003).
 - **Functions.** `apps/api/vercel.json` sets `maxDuration: 60`. Entry point: `src/index.ts` exports the Hono app; `src/app.ts` stays free of Vercel imports. If the Hono preset cannot resolve the workspace packages, the fallback is an `api/[[...route]].ts` file using `hono/vercel`'s `handle()`. This is decided in the deployment task.
 - **Environment variables** are validated by Zod at cold start (`env.ts`). A missing or malformed variable makes every request return `internal` and logs which variable is wrong, without its value. `apps/api/.env.example` lists the names.
