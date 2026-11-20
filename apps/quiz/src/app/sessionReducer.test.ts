@@ -1,15 +1,20 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  codeQuestion,
   completeSession,
+  failingResults,
   firstQuestion,
   lastQuestion,
   multipleChoiceQuestion,
+  negativeReview,
+  passingResults,
   secondQuestion,
   sessionWithNineAnswers,
   sessionWithThreeAnswers,
 } from "../testing/fixtures.js";
 import {
+  codeReviewRequest,
   createSeed,
   initialQuizState,
   isComplete,
@@ -18,6 +23,7 @@ import {
   type QuizState,
   sessionProgress,
   withChoiceAnswer,
+  withCodeAnswer,
 } from "./sessionReducer.js";
 
 const session = newSession("javascript", 7);
@@ -289,5 +295,130 @@ describe("sessionProgress", () => {
         next: { status: "pending", requestId: 2 },
       }),
     ).toEqual({ topic: "javascript", position: 1, level: 4 });
+  });
+});
+
+describe("withCodeAnswer", () => {
+  it("records a code answer as correct only when every test passed (AC-3.3)", () => {
+    const answer = {
+      kind: "code",
+      conceptId: "array-methods",
+      stem: codeQuestion.question.prompt,
+    };
+    expect(
+      withCodeAnswer(sessionWithThreeAnswers, codeQuestion, passingResults).answers.at(-1),
+    ).toEqual({ ...answer, correct: true });
+    expect(
+      withCodeAnswer(sessionWithThreeAnswers, codeQuestion, failingResults).answers.at(-1),
+    ).toEqual({ ...answer, correct: false });
+    expect(withCodeAnswer(sessionWithThreeAnswers, codeQuestion, []).answers.at(-1)?.correct).toBe(
+      false,
+    );
+  });
+});
+
+describe("codeReviewRequest", () => {
+  it("sends the signed exercise, the level it was asked at and the code (plan §7.2)", () => {
+    expect(codeReviewRequest(sessionWithThreeAnswers, codeQuestion, "code")).toEqual({
+      topic: "javascript",
+      conceptId: "array-methods",
+      level: 4,
+      exercise: codeQuestion.question,
+      code: "code",
+    });
+  });
+});
+
+describe("quizReducer with a code exercise", () => {
+  const answering: QuizState = {
+    screen: "answering",
+    session: sessionWithThreeAnswers,
+    question: codeQuestion,
+  };
+  const answered = withCodeAnswer(sessionWithThreeAnswers, codeQuestion, passingResults);
+  const feedback = quizReducer(answering, {
+    type: "codeAnswered",
+    session: answered,
+    code: "code",
+    testResults: passingResults,
+    requestId: 5,
+    reviewRequestId: 6,
+  });
+
+  it("shows the code feedback with the review and the prefetch pending", () => {
+    expect(feedback).toEqual({
+      screen: "codeFeedback",
+      session: answered,
+      question: codeQuestion,
+      code: "code",
+      testResults: passingResults,
+      review: { status: "pending", requestId: 6 },
+      next: { status: "pending", requestId: 5 },
+    });
+    expect(sessionProgress(feedback)).toEqual({ topic: "javascript", position: 4, level: 5 });
+  });
+
+  it("ignores a code answer on a choice question, and a choice answer on an exercise", () => {
+    const choice: QuizState = { ...answering, question: firstQuestion };
+    expect(
+      quizReducer(choice, {
+        type: "codeAnswered",
+        session: answered,
+        code: "code",
+        testResults: passingResults,
+        requestId: 5,
+        reviewRequestId: 6,
+      }),
+    ).toBe(choice);
+    expect(
+      quizReducer(answering, { type: "answered", session, selectedIds: ["a"], requestId: 5 }),
+    ).toBe(answering);
+  });
+
+  it("shows the review that answers the pending request, and ignores older ones", () => {
+    const loaded = quizReducer(feedback, {
+      type: "reviewLoaded",
+      requestId: 6,
+      review: negativeReview.review,
+    });
+    expect(loaded).toMatchObject({ review: { status: "ready", review: negativeReview.review } });
+    expect(
+      quizReducer(feedback, { type: "reviewLoaded", requestId: 4, review: negativeReview.review }),
+    ).toBe(feedback);
+    expect(quizReducer(feedback, { type: "reviewFailed", requestId: 4 })).toBe(feedback);
+  });
+
+  it("retries a review only after it failed", () => {
+    const failed = quizReducer(feedback, { type: "reviewFailed", requestId: 6 });
+    expect(failed).toMatchObject({ review: { status: "failed" } });
+
+    expect(quizReducer(failed, { type: "retryReview", requestId: 7 })).toMatchObject({
+      review: { status: "pending", requestId: 7 },
+    });
+    expect(quizReducer(feedback, { type: "retryReview", requestId: 7 })).toBe(feedback);
+  });
+
+  it("keeps the prefetch and the review apart", () => {
+    const prefetched = quizReducer(feedback, {
+      type: "questionLoaded",
+      requestId: 5,
+      question: secondQuestion,
+    });
+    expect(prefetched).toMatchObject({
+      review: { status: "pending", requestId: 6 },
+      next: { status: "ready", question: secondQuestion },
+    });
+    expect(quizReducer(prefetched, { type: "next" })).toEqual({
+      screen: "answering",
+      session: answered,
+      question: secondQuestion,
+    });
+  });
+
+  it("drops a review that arrives after leaving the feedback", () => {
+    const next = quizReducer(feedback, { type: "next" });
+    expect(
+      quizReducer(next, { type: "reviewLoaded", requestId: 6, review: negativeReview.review }),
+    ).toBe(next);
   });
 });

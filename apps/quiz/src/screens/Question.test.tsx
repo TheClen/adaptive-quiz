@@ -14,7 +14,9 @@ import { Question } from "./Question.js";
 function renderQuestion(question: NextQuestionResponse) {
   const onSubmit = vi.fn<(selectedIds: OptionId[]) => void>();
   const user = userEvent.setup();
-  const { container } = render(<Question question={question} onSubmit={onSubmit} />);
+  const { container } = render(
+    <Question question={question} onSubmit={onSubmit} onSubmitCode={vi.fn()} />,
+  );
   return { onSubmit, user, container };
 }
 

@@ -1,11 +1,16 @@
 import {
   evaluateChoice,
+  evaluateCode,
   levelHistory,
   nextPosition,
   questionStem,
   START_LEVEL,
 } from "@ai-in-learning/core";
+import type { TestResult } from "@ai-in-learning/core/runner";
 import {
+  type CodeExercise,
+  type CodeReview,
+  type CodeReviewRequest,
   type Level,
   type MultipleChoiceQuestion,
   type NextQuestionResponse,
@@ -27,6 +32,18 @@ export type FailedStep = "nextQuestion";
 
 /** A question the visitor answers by selecting options. */
 export type ChoiceQuestion = SingleChoiceQuestion | MultipleChoiceQuestion;
+
+/** A response whose question is a code exercise. */
+export type CodeQuestionResponse = NextQuestionResponse & { readonly question: CodeExercise };
+
+/**
+ * The AI review of a submitted exercise (AC-6.2). It has its own states, so a
+ * slow or failed review never blocks "Next question" (plan §10).
+ */
+export type ReviewStatus =
+  | { readonly status: "pending"; readonly requestId: number }
+  | { readonly status: "ready"; readonly review: CodeReview }
+  | { readonly status: "failed" };
 
 /**
  * The next question, requested as soon as an answer is evaluated so that it is
@@ -68,6 +85,19 @@ export type QuizState =
       readonly next: NextQuestion;
     }
   | {
+      readonly screen: "codeFeedback";
+      /** The session with the answer just evaluated as its last one. */
+      readonly session: SessionState;
+      /** The exercise just submitted. */
+      readonly question: CodeQuestionResponse;
+      /** The code as submitted, frozen (AC-3.3). */
+      readonly code: string;
+      /** The results of the final run, which decided the verdict (AC-3.3, AC-6.3). */
+      readonly testResults: readonly TestResult[];
+      readonly review: ReviewStatus;
+      readonly next: NextQuestion;
+    }
+  | {
       readonly screen: "error";
       readonly session: SessionState;
       readonly failure: RequestFailure;
@@ -95,6 +125,20 @@ export type QuizAction =
       /** The prefetch of the next question, or `null` once the session is complete. */
       readonly requestId: number | null;
     }
+  | {
+      readonly type: "codeAnswered";
+      /** The session with the answer appended, from {@link withCodeAnswer}. */
+      readonly session: SessionState;
+      readonly code: string;
+      readonly testResults: readonly TestResult[];
+      /** The prefetch of the next question, or `null` once the session is complete. */
+      readonly requestId: number | null;
+      /** The review request of this submission. */
+      readonly reviewRequestId: number;
+    }
+  | { readonly type: "reviewLoaded"; readonly requestId: number; readonly review: CodeReview }
+  | { readonly type: "reviewFailed"; readonly requestId: number }
+  | { readonly type: "retryReview"; readonly requestId: number }
   | { readonly type: "next" }
   | { readonly type: "retry"; readonly requestId: number }
   | { readonly type: "goHome" };
@@ -137,6 +181,52 @@ export function withChoiceAnswer(
       },
     ],
   };
+}
+
+/**
+ * The session after a code answer: correct only if every test of the final run
+ * passed (AC-3.3), whatever the review says later (AC-6.3).
+ */
+export function withCodeAnswer(
+  session: SessionState,
+  question: CodeQuestionResponse,
+  testResults: readonly TestResult[],
+): SessionState {
+  return {
+    ...session,
+    answers: [
+      ...session.answers,
+      {
+        kind: "code",
+        conceptId: question.conceptId,
+        correct: evaluateCode(testResults),
+        stem: questionStem(question.question),
+      },
+    ],
+  };
+}
+
+/**
+ * The review request of a submission (plan §7.2): domain data only, with the
+ * exercise as the server signed it and the level it was asked at.
+ */
+export function codeReviewRequest(
+  session: SessionState,
+  question: CodeQuestionResponse,
+  code: string,
+): CodeReviewRequest {
+  return {
+    topic: session.topic,
+    conceptId: question.conceptId,
+    level: question.level,
+    exercise: question.question,
+    code,
+  };
+}
+
+/** True when `question` is a code exercise. */
+export function isCodeQuestion(question: NextQuestionResponse): question is CodeQuestionResponse {
+  return question.question.kind === "code";
 }
 
 /** True when `question` is answered by selecting options. */
@@ -194,8 +284,43 @@ export function quizReducer(state: QuizState, action: QuizAction): QuizState {
             : { status: "pending", requestId: action.requestId },
       };
 
+    case "codeAnswered":
+      if (state.screen !== "answering" || !isCodeQuestion(state.question)) {
+        return state;
+      }
+      return {
+        screen: "codeFeedback",
+        session: action.session,
+        question: state.question,
+        code: action.code,
+        testResults: action.testResults,
+        review: { status: "pending", requestId: action.reviewRequestId },
+        next:
+          action.requestId === null
+            ? { status: "none" }
+            : { status: "pending", requestId: action.requestId },
+      };
+
+    case "reviewLoaded":
+      if (!isReviewing(state, action.requestId)) {
+        return state;
+      }
+      return { ...state, review: { status: "ready", review: action.review } };
+
+    case "reviewFailed":
+      if (!isReviewing(state, action.requestId)) {
+        return state;
+      }
+      return { ...state, review: { status: "failed" } };
+
+    case "retryReview":
+      if (state.screen !== "codeFeedback" || state.review.status !== "failed") {
+        return state;
+      }
+      return { ...state, review: { status: "pending", requestId: action.requestId } };
+
     case "next":
-      if (state.screen !== "feedback") {
+      if (state.screen !== "feedback" && state.screen !== "codeFeedback") {
         return state;
       }
       return showNext(state);
@@ -215,7 +340,7 @@ export function quizReducer(state: QuizState, action: QuizAction): QuizState {
  * "Next question" (AC-6.4): the prefetched question at once, the loading state
  * while the prefetch is on its way, or the error it ended with.
  */
-function showNext(state: Extract<QuizState, { readonly screen: "feedback" }>): QuizState {
+function showNext(state: FeedbackState): QuizState {
   switch (state.next.status) {
     case "ready":
       return { screen: "answering", session: state.session, question: state.next.question };
@@ -235,15 +360,27 @@ function showNext(state: Extract<QuizState, { readonly screen: "feedback" }>): Q
   }
 }
 
-/** True when `state` is the feedback screen waiting for the prefetch `requestId`. */
-function isPrefetching(
-  state: QuizState,
-  requestId: number,
-): state is Extract<QuizState, { readonly screen: "feedback" }> {
+/** A feedback screen: of a choice question or of a code exercise. */
+export type FeedbackState = Extract<QuizState, { readonly screen: "feedback" | "codeFeedback" }>;
+
+/** True when `state` is a feedback screen waiting for the prefetch `requestId`. */
+function isPrefetching(state: QuizState, requestId: number): state is FeedbackState {
   return (
-    state.screen === "feedback" &&
+    (state.screen === "feedback" || state.screen === "codeFeedback") &&
     state.next.status === "pending" &&
     state.next.requestId === requestId
+  );
+}
+
+/** True when `state` is the code feedback screen waiting for the review `requestId`. */
+function isReviewing(
+  state: QuizState,
+  requestId: number,
+): state is Extract<QuizState, { readonly screen: "codeFeedback" }> {
+  return (
+    state.screen === "codeFeedback" &&
+    state.review.status === "pending" &&
+    state.review.requestId === requestId
   );
 }
 
@@ -269,7 +406,7 @@ export function sessionProgress(state: QuizState): SessionProgress | null {
   return {
     topic,
     position:
-      state.screen === "answering" || state.screen === "feedback"
+      state.screen === "answering" || state.screen === "feedback" || state.screen === "codeFeedback"
         ? state.question.position
         : nextPosition(answers),
     level: levelHistory(answers).at(-1) ?? START_LEVEL,

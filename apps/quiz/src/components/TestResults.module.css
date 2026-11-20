@@ -1,0 +1,77 @@
+.results {
+  margin: 0 0 var(--space-5);
+}
+
+.summary {
+  margin: 0 0 var(--space-3);
+  font-weight: 600;
+}
+
+/* Kept in the page, empty, so the live region exists before its first message. */
+.empty {
+  margin: 0;
+}
+
+.tests {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.test {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-4);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+/* The "Passed" and "Failed" words carry the meaning; the border only reinforces it. */
+.test[data-passed="true"] {
+  border-color: var(--color-success);
+}
+
+.test[data-passed="false"] {
+  border-color: var(--color-error-border);
+  background: var(--color-error-background);
+}
+
+.description {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.passed,
+.failed {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.passed {
+  color: var(--color-success);
+}
+
+.failed {
+  color: var(--color-error-border);
+}
+
+.icon {
+  flex: none;
+}
+
+.reason {
+  flex-basis: 100%;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-small);
+  overflow-wrap: anywhere;
+}

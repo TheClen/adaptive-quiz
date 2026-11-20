@@ -1,6 +1,8 @@
+import type { TestResult } from "@ai-in-learning/core/runner";
 import type { NextQuestionResponse, OptionId } from "@ai-in-learning/shared-types";
 import { useState } from "react";
 
+import { CodeExercise } from "../components/CodeExercise.js";
 import { MultipleChoice } from "../components/MultipleChoice.js";
 import { SingleChoice } from "../components/SingleChoice.js";
 import { SubmitButton } from "../components/SubmitButton.js";
@@ -8,17 +10,21 @@ import screen from "./Screen.module.css";
 
 /**
  * The question screen. Choice questions show their options and Submit; code
- * exercises show their prompt only until the exercise screen arrives (T25).
+ * exercises show the editor, the tests and Submit.
  *
- * Render it with a `key` per question, so the selection starts empty each time.
+ * Render it with a `key` per question, so the selection or the code starts
+ * afresh each time.
  */
 export function Question({
   question,
   onSubmit,
+  onSubmitCode,
 }: {
   readonly question: NextQuestionResponse;
   /** Receives the selected option ids, in display order, never empty (AC-2.3). */
   readonly onSubmit: (selectedIds: OptionId[]) => void;
+  /** Receives the submitted code and the results of its final run (AC-3.3). */
+  readonly onSubmitCode: (code: string, testResults: readonly TestResult[]) => void;
 }) {
   const [selected, setSelected] = useState<OptionId[]>([]);
   const content = question.question;
@@ -30,7 +36,7 @@ export function Question({
       </h1>
       <p className={screen.muted}>{question.conceptLabel}</p>
       {content.kind === "code" ? (
-        <p className={screen.lead}>{content.prompt}</p>
+        <CodeExercise exercise={content} onSubmit={onSubmitCode} />
       ) : (
         <form
           noValidate
