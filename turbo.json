@@ -15,7 +15,8 @@
     "typecheck": {},
     "test": {},
     "test:e2e": {
-      "dependsOn": ["build"]
+      "dependsOn": ["build"],
+      "env": ["CI"]
     },
     "dev": {
       "cache": false,

@@ -7,6 +7,10 @@ coverage/
 .turbo/
 .vercel/
 
+# Playwright results and report (apps/quiz/e2e)
+playwright-report/
+test-results/
+
 # Question samples of quality gate M1 (apps/api/scripts/sample-questions.ts)
 apps/api/samples/
 

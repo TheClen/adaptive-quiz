@@ -80,6 +80,10 @@ export function CodeEditor({
           EditorView.contentAttributes.of({
             "aria-labelledby": labelId,
             "aria-describedby": hintId,
+            // The editable area is already a tab stop, as `contenteditable`. Saying so
+            // lets axe see that a long line, which scrolls the editor sideways, can
+            // be reached and scrolled with the keyboard (`scrollable-region-focusable`).
+            tabindex: "0",
           }),
           EditorView.updateListener.of((update) => {
             if (update.docChanged) {

@@ -125,6 +125,7 @@ describe("CodeEditor", () => {
       const textbox = editable();
       expect(textbox.getAttribute("aria-readonly")).toBe("true");
       expect(textbox.getAttribute("contenteditable")).toBe("true");
+      expect(textbox.tabIndex).toBe(0);
       expect(textbox.getAttribute("aria-describedby")).toBe(screen.getByText(READ_ONLY_HINT).id);
       expect(screen.queryByText(EDITABLE_HINT)).toBeNull();
     });
