@@ -20,15 +20,19 @@ export type ChoiceOptionDraft = z.infer<typeof ChoiceOptionDraft>;
  * are domain rules, checked by `checkChoiceDraft`, so a broken draft is rejected
  * with a reason the retry message can name. Option ids are assigned by the server
  * after the shuffle, so the draft has none.
+ *
+ * The snippet comes before the question. The model writes fields in schema order,
+ * so it settles the code first and then asks about that code. With the question
+ * first, it could ask about code it later wrote differently.
  */
 export const ChoiceDraft = z.object({
-  prompt: z.string().min(1),
   snippet: z
     .object({
       language: z.enum(["javascript", "jsx"]),
       source: z.string().min(1),
     })
     .nullable(),
+  prompt: z.string().min(1),
   options: z.array(ChoiceOptionDraft),
   explanation: z.string().min(1),
 });
