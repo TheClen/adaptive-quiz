@@ -1,6 +1,6 @@
 # Plan 001 — Adaptive quiz (MVP)
 
-- Status: Approved (2026-11-17), §1, §3 and §4 amended and approved (2026-11-17), §14 amended and approved (2026-11-20)
+- Status: Approved (2026-11-17), §1, §3 and §4 amended and approved (2026-11-17), §14 amended and approved (2026-11-20), §4 and §14 amended and approved (2026-11-20, API entry point)
 - Date: 2026-11-17
 - Constitution: 1.0.0
 - Spec: [spec.md](spec.md) (Approved 2026-11-17)
@@ -77,14 +77,14 @@ Exception: TypeScript stays on 6.0 while `typescript-eslint` supports only versi
 apps/
   api/
     src/
-      app.ts                 Hono app: routes, middleware, error handler (platform-agnostic)
-      index.ts               default export for Vercel (Hono framework preset)
+      create-app.ts          Hono app: routes, middleware, error handler (platform-agnostic)
+      index.ts               default export and function config for Vercel (Hono framework preset)
       dev.ts                 local server with @hono/node-server (port 8787)
       env.ts                 Zod schema for environment variables, parsed once per cold start
       routes/quiz.ts         POST /api/quiz/next-question, POST /api/quiz/code-review
       http/errors.ts         ApiError catalogue -> HTTP status, fixed messages
     .env.example
-    vercel.json              function settings (maxDuration)
+    vercel.json              deploy the compiled dist/ (outputDirectory)
   quiz/
     src/
       app/                   QuizApp, session reducer (useReducer), ApiClient context
@@ -555,7 +555,9 @@ sequenceDiagram
 
 - **Skipping unaffected builds.** Vercel skips the build of a monorepo project that a commit does not affect. The repository meets the requirements: it is on GitHub, uses pnpm workspaces, gives every package a unique name and declares its workspace dependencies in each `package.json`. `turbo-ignore` is not used: Turborepo has deprecated it in favour of `turbo query affected`. If automatic skipping does not work, the fallback Ignored Build Step is `npx turbo@<version in package.json> query affected --base=$VERCEL_GIT_PREVIOUS_SHA --packages @ai-in-learning/<app> --exit-code`.
 - **Rewrite.** `apps/quiz/vercel.json` rewrites `/api/:path*` to the API project's production domain. Browsers see one origin, so no CORS (ADR 0003).
-- **Functions.** `apps/api/vercel.json` sets `maxDuration: 60`. Entry point: `src/index.ts` exports the Hono app; `src/app.ts` stays free of Vercel imports. If the Hono preset cannot resolve the workspace packages, the fallback is an `api/[[...route]].ts` file using `hono/vercel`'s `handle()`. This is decided in the deployment task.
+- **Functions.** Vercel deploys the API as compiled by `turbo run build`, not its sources: `apps/api/vercel.json` sets `outputDirectory: "dist"`, so the function runs the output of the repository's own `tsc` and resolves workspace packages to their `dist/`. Otherwise the Hono preset recompiles the sources with its own configuration and fails on type errors that the repository's type check does not raise.
+  - Entry point: `src/index.ts` exports the Hono app and `config = { maxDuration: 60 }`. The preset reads function settings from the entry file; a `functions` entry in `vercel.json` does not reach it.
+  - The preset takes as entrypoint the first file named `app`, `index` or `server` (in that order) that imports `"hono"`. So `index.ts` imports `Hono` itself, and the platform-agnostic app lives in `src/create-app.ts`, which stays free of Vercel imports. This is the preset's behaviour, not a documented contract: a local `vercel build` and each pull request's preview deployment show a change.
 - **Environment variables** are validated by Zod at cold start (`env.ts`). A missing or malformed variable makes every request return `internal` and logs which variable is wrong, without its value. `apps/api/.env.example` lists the names.
 - **Previews.** Pull requests get preview deployments for both projects. Previews stay behind Vercel's deployment protection, so they are not public. Quiz previews call the production API through the rewrite; API previews use the same workspace key and are tested directly.
 - **Security headers** on the quiz project: a CSP with `default-src 'self'`, `script-src 'self' 'wasm-unsafe-eval'` (QuickJS), `worker-src 'self'`, `connect-src 'self'`, plus `Referrer-Policy`, `X-Content-Type-Options` and `frame-ancestors 'none'`.

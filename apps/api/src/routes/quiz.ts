@@ -8,7 +8,7 @@ import {
 import { CodeReviewRequest, NextQuestionRequest } from "@ai-in-learning/shared-types";
 import { Hono } from "hono";
 
-import type { AppBindings } from "../app.js";
+import type { AppBindings } from "../create-app.js";
 import { parseJsonBody } from "../http/body.js";
 import { ApiFailure } from "../http/errors.js";
 import type { RequestLogFields } from "../http/logging.js";
