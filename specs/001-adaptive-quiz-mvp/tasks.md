@@ -1,6 +1,6 @@
 # Tasks 001 — Adaptive quiz (MVP)
 
-- Status: Approved (2026-11-17), T02 amended and approved (2026-11-17)
+- Status: Approved (2026-11-17), T02 amended and approved (2026-11-17), T28 amended and approved (2026-11-20)
 - Date: 2026-11-17
 - Constitution: 1.0.0
 - Spec: [spec.md](spec.md) (Approved 2026-11-17, NFR-3 amended 2026-11-17)
@@ -333,7 +333,7 @@ flowchart LR
 - **Plan:** §11.2, §14
 - **Covers:** deployment part of ADR 0002, ADR 0003, ADR 0004; manual checks M3, M4
 - **Deliverables:**
-  - 👤 Upstash Redis database; 👤 two Vercel projects (Root Directory `apps/quiz` and `apps/api`, Ignored Build Step `npx turbo-ignore`), production environment variables on the API project only, deployment protection on previews;
+  - 👤 Upstash Redis database; 👤 two Vercel projects (Root Directory `apps/quiz` and `apps/api`, no Ignored Build Step, relying on Vercel's automatic skipping, with the `turbo query affected` fallback of plan §14 if it fails), production environment variables on the API project only, deployment protection on previews;
   - rewrite destination set to the API's production domain;
   - results of M3 (visitor IP reaches the API through the rewrite) and M4 (spend-limit message, on a test workspace with a tiny limit) recorded in `checks.md`.
 - **Done when:** the production demo completes a session; a commit touching only `apps/quiz` skips the API build (and the other way round); M3 and M4 pass. If M3 fails, stop and propose the ADR described in plan §14 before going further.
