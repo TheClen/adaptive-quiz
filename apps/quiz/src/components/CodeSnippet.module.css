@@ -1,8 +1,7 @@
-/*
- * Token colours reach at least 4.5:1 on --color-code-background. Highlighting
- * only helps reading: no meaning depends on it.
- */
+/* Token colours come from the shared code tokens. */
 .snippet {
+  composes: tokens from "../styles/codeTokens.module.css";
+
   margin: 0 0 var(--space-5);
   padding: var(--space-4);
   overflow-x: auto;
@@ -14,39 +13,4 @@
   font-size: var(--font-size-code);
   line-height: var(--line-height-code);
   tab-size: 2;
-}
-
-.snippet :global(.tok-keyword) {
-  color: var(--color-code-keyword);
-}
-
-.snippet :global(.tok-string),
-.snippet :global(.tok-string2) {
-  color: var(--color-code-string);
-}
-
-.snippet :global(.tok-number),
-.snippet :global(.tok-bool),
-.snippet :global(.tok-atom) {
-  color: var(--color-code-literal);
-}
-
-.snippet :global(.tok-comment) {
-  color: var(--color-code-comment);
-  font-style: italic;
-}
-
-.snippet :global(.tok-definition) {
-  color: var(--color-code-definition);
-}
-
-.snippet :global(.tok-propertyName),
-.snippet :global(.tok-attributeName) {
-  color: var(--color-code-property);
-}
-
-.snippet :global(.tok-typeName),
-.snippet :global(.tok-className),
-.snippet :global(.tok-tagName) {
-  color: var(--color-code-type);
 }
