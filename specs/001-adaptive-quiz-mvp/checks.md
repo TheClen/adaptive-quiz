@@ -13,7 +13,7 @@ This document records the manual checks of plan §16.3. They run before the firs
 | M1 | Quality gate on generated questions | T18 | Not run |
 | M2 | Latency on the deployed demo | T29 | Not run |
 | M3 | Visitor IP reaches the API through the rewrite | T28 | Passed (2026-11-26) |
-| M4 | Spend-limit behaviour on a test workspace | T28 | Not run |
+| M4 | Spend-limit behaviour on a test workspace | T28 | Passed (2026-11-26) |
 | M5 | Screen reader and keyboard pass | T29 | Not run |
 
 ## M1 — Quality gate on generated questions
@@ -101,7 +101,30 @@ Decision: per-IP limits work through the rewrite. The fallback of plan §14 (ser
 
 ## M4 — Spend-limit behaviour on a test workspace
 
-Recorded in T28.
+Covers AC-8.3 and the spend-limit row of the error mapping ([plan §11.3](plan.md#113-error-mapping-ac-81-to-ac-84)): when the workspace's monthly spend limit is reached, the API returns `budget_exhausted` and the front-end shows the budget message.
+
+### How to run
+
+1. 👤 In the Claude Console, create a test workspace with the smallest monthly spend limit the Console accepts (a whole number of dollars, so $1), and an API key in that workspace. Check on the API keys page that the key's scope is the test workspace.
+2. Put that key in `apps/api/.env` as `ANTHROPIC_API_KEY`. Never put it on Vercel: production keeps its own key.
+3. Use up the limit with direct Messages API calls outside the quiz, so the API's own rate limits are not consumed. Long answers from a larger model do it in a few calls (about $0.08 per call of 8,000 output tokens on Claude Sonnet 5.5).
+4. The limit is not enforced in real time: keep a hard cap on the number of calls, wait a few minutes, then send one tiny call to see whether the workspace is blocked.
+5. Run the API and the quiz locally (`pnpm --filter @ai-in-learning/api dev` and `pnpm --filter @ai-in-learning/quiz dev`), start a session, and check the screen and the API's log line.
+
+### Pass condition
+
+The front-end shows the budget message, and the API logs `budget_exhausted` for the upstream error.
+
+### Results
+
+| Date | Run by | Workspace limit | Spent before the block | Upstream error | API outcome | Front-end | Result |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 2026-11-26 | Claude Code and project owner | $1 per month | About $1.60 (20 calls, estimated from usage at plan §8.1 prices) | 400 `invalid_request_error`, message "You have reached your specified workspace API usage limits. You will regain access on 2026-12-01 at 00:00 UTC." | 503 `budget_exhausted`, `upstreamStatus` 400 | "Demo temporarily unavailable": the monthly AI budget message | Passed |
+
+Findings:
+
+- The error is the one `mapModelError()` already expects: a 400 with no `error_code`, recognised by its message prefix. No code change is needed.
+- Enforcement lags. All 20 calls succeeded, although the estimated spend passed $1 after the 13th; the block applied a few minutes later. The real overrun on the production workspace is bounded by the per-IP and global limits of plan §11.1, not by the spend limit alone.
 
 ## M5 — Screen reader and keyboard pass
 
