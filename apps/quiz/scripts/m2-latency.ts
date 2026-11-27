@@ -19,7 +19,8 @@
  * Sessions alternate between 1024 and 1440 px wide (NFR-7). Every screen is
  * scanned with axe and checked for horizontal overflow, and every control is
  * reached with Tab, so a focus trap stops the session (NFR-2). Results go to
- * `test-results/m2-<time>.json`, which git ignores.
+ * `test-results/m2-<time>.json`, which git ignores, with failed requests and a
+ * screenshot of the page where a session stopped.
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -68,6 +69,8 @@ interface SessionRecord {
   issues: ScreenIssue[];
   completed: boolean;
   error?: string;
+  /** The page when the session stopped. */
+  screenshot?: string;
 }
 
 const { values } = parseArgs({
@@ -271,6 +274,8 @@ async function playSession(page: Page, record: SessionRecord): Promise<void> {
   record.completed = true;
 }
 
+const directory = "test-results";
+await mkdir(directory, { recursive: true });
 const browser = await chromium.launch({ headless: !values.headed });
 const sessions: SessionRecord[] = [];
 try {
@@ -287,10 +292,26 @@ try {
       completed: false,
     };
     sessions.push(record);
+    // A request that never gets its response, such as one aborted by the quiz's
+    // fetch timeout, shows here rather than as a response.
+    page.on("requestfailed", (request) => {
+      record.issues.push({
+        screen: "network",
+        issue: `${request.method()} ${new URL(request.url()).pathname} failed: ${
+          request.failure()?.errorText ?? "unknown"
+        }`,
+      });
+    });
     try {
       await playSession(page, record);
     } catch (error) {
       record.error = error instanceof Error ? error.message : String(error);
+      const screenshot = join(
+        directory,
+        `m2-${topic}-${record.startedAt.replaceAll(":", "-")}-stopped.png`,
+      );
+      await page.screenshot({ path: screenshot, fullPage: true }).catch(() => undefined);
+      record.screenshot = screenshot;
     }
     await context.close();
     console.log(
@@ -350,8 +371,6 @@ for (const session of sessions) {
   }
 }
 
-const directory = "test-results";
-await mkdir(directory, { recursive: true });
 const file = join(directory, `m2-${topic}-${new Date().toISOString().replaceAll(":", "-")}.json`);
 await writeFile(file, `${JSON.stringify({ url: values.url, pauseMs, sessions }, null, 2)}\n`);
 console.log(`\nResults written to ${file}`);
