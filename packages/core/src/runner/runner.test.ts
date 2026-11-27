@@ -299,13 +299,15 @@ describe("isolation (AC-3.5)", () => {
     expect(second[0]?.passed).toBe(true);
   });
 
-  // Filling 32 MB inside QuickJS is CPU-bound: about 1.5 s locally, 2 to 7 s on CI
-  // runners shared with other test tasks, so the default 5 s is too tight.
+  // The hog allocates 1 MB strings natively: filling 32 MB element by element took
+  // about 1.5 s locally and up to 25 s on CI runners shared with other test tasks.
+  // The timeout stays above the default 5 s for those runners.
   it("limits memory to 32 MB and recovers for the next run", { timeout: 20_000 }, async () => {
     const results = await runner.run({
       code: `function hog() {
         const chunks = [];
-        while (true) chunks.push(new Array(100000).fill(1));
+        const block = "x".repeat(1 << 20);
+        while (true) chunks.push(block + chunks.length);
       }`,
       functionName: "hog",
       tests: [makeTest("t", [], 0)],
