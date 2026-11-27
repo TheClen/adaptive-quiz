@@ -180,7 +180,7 @@ describe("POST /api/quiz/next-question", () => {
           outcome: "ok",
           model: "claude-haiku-5-5",
           attempts: 2,
-          rejections: ["option-count"],
+          rejections: ["option-count:3"],
           usage: { inputTokens: 0, outputTokens: 0 },
         },
       ]);
@@ -349,7 +349,7 @@ describe("POST /api/quiz/next-question", () => {
       await expectApiError(await post(app, { state: singleChoiceState }), "generation_failed");
       expect(model.callCount).toBe(2);
       expect(lines).toMatchObject([
-        { outcome: "generation_failed", attempts: 2, rejections: ["option-count", "refusal"] },
+        { outcome: "generation_failed", attempts: 2, rejections: ["option-count:3", "refusal"] },
       ]);
     });
   });

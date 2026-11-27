@@ -34,6 +34,15 @@ function totalUsage(attempts: readonly LoggedAttempt[]): ModelUsage {
   );
 }
 
+/**
+ * The rule a rejected draft broke, with its details, for example
+ * `field-too-long:code` or `near-duplicate:2`. Retry reasons carry only enums and
+ * numbers (plan §8.3), so the label holds nothing the model or the client wrote.
+ */
+function rejectionLabel({ rule, ...details }: { readonly rule: string }): string {
+  return [rule, ...Object.values(details).map(String)].join(":");
+}
+
 /** Model, token usage and rejected rules, never drafts, prompts or code (plan §11.4). */
 function logAttempts(log: RequestLogFields, attempts: readonly LoggedAttempt[]): void {
   const last = attempts.at(-1);
@@ -83,7 +92,7 @@ export function quizRoutes(): Hono<AppBindings> {
       log,
       result.attempts.map((attempt) => ({
         ...attempt,
-        rejection: attempt.rejection?.rule ?? null,
+        rejection: attempt.rejection === null ? null : rejectionLabel(attempt.rejection),
       })),
     );
     if (!result.ok) {
