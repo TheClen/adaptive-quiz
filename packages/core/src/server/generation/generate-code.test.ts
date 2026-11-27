@@ -185,19 +185,27 @@ const BROKEN: readonly BrokenCase[] = [
       ...validJavaScriptCodeDraft,
       referenceSolution: `${validJavaScriptCodeDraft.referenceSolution}${"//\n".repeat(LIMITS.code)}`,
     },
-    reason: { rule: "field-too-long", field: "code" },
+    reason: {
+      rule: "field-too-long",
+      field: "code",
+      length: validJavaScriptCodeDraft.referenceSolution.length + "//\n".length * LIMITS.code,
+    },
   },
   {
     name: "oversized test description",
     topic: "javascript",
     draft: withTest("javascript", 0, { description: "d".repeat(LIMITS.testDescription + 1) }),
-    reason: { rule: "field-too-long", field: "test-description" },
+    reason: {
+      rule: "field-too-long",
+      field: "test-description",
+      length: LIMITS.testDescription + 1,
+    },
   },
   {
     name: "oversized prompt",
     topic: "react",
     draft: { ...react, prompt: "p".repeat(LIMITS.prompt + 1) },
-    reason: { rule: "field-too-long", field: "prompt" },
+    reason: { rule: "field-too-long", field: "prompt", length: LIMITS.prompt + 1 },
   },
   {
     name: "draft with 2 tests",

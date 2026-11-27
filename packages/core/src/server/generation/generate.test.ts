@@ -123,7 +123,7 @@ const BROKEN: readonly BrokenCase[] = [
     name: "oversized prompt",
     kind: "single",
     draft: { ...validSingleDraft, prompt: "x".repeat(LIMITS.prompt + 1) },
-    reason: { rule: "field-too-long", field: "prompt" },
+    reason: { rule: "field-too-long", field: "prompt", length: LIMITS.prompt + 1 },
   },
   {
     name: "oversized option",
@@ -132,13 +132,13 @@ const BROKEN: readonly BrokenCase[] = [
       ...multiple.slice(0, 3),
       wrong("y".repeat(LIMITS.optionText + 1)),
     ]),
-    reason: { rule: "field-too-long", field: "option" },
+    reason: { rule: "field-too-long", field: "option", length: LIMITS.optionText + 1 },
   },
   {
     name: "oversized explanation",
     kind: "single",
     draft: { ...validSingleDraft, explanation: "z".repeat(LIMITS.explanation + 1) },
-    reason: { rule: "field-too-long", field: "explanation" },
+    reason: { rule: "field-too-long", field: "explanation", length: LIMITS.explanation + 1 },
   },
   {
     name: "oversized snippet",
@@ -147,7 +147,7 @@ const BROKEN: readonly BrokenCase[] = [
       ...validSingleDraft,
       snippet: { language: "javascript", source: "// x\n".repeat(LIMITS.code) },
     },
-    reason: { rule: "field-too-long", field: "code" },
+    reason: { rule: "field-too-long", field: "code", length: "// x\n".length * LIMITS.code },
   },
   {
     name: "JSX snippet in the JavaScript topic",

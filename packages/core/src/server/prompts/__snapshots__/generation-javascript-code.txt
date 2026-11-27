@@ -25,7 +25,7 @@ Write everything in English: the statement, the code, its comments, the test des
 
 - The learner writes one synchronous pure function, declared as `function name(...) { ... }`. Its name starts with a lowercase letter and contains only letters and digits.
 - The code never uses `import`, `export`, `require`, JSX, hooks, the `React` namespace, the DOM (`document`, `window`), the network (`fetch`), timers (`setTimeout`, `setInterval`), `async`, `await` or randomness (`Math.random`, `Date.now`). It only computes.
-- The statement says what the function receives and what it returns, with one short example.
+- The statement says what the function receives and what it returns, with one short example on a single line. Describe the shape of an object in words instead of writing it out in full; the tests carry the other cases.
 - Arguments and return values are JSON values: objects, arrays, strings, numbers, booleans and null. The function may use other values, such as `Map` or `Set`, internally.
 - Write 3 to 6 tests. Each one has a short description, its arguments as a JSON array and its expected return value as JSON. Results are compared with the expected value by deep equality. At least one test covers an edge case.
 - When the concept is about immutability and copying, at least one test sets `checksImmutability` to true: that test also checks that the function does not change its arguments.
@@ -35,7 +35,7 @@ Write everything in English: the statement, the code, its comments, the test des
 
 # Length limits
 
-- Statement: at most 600 characters.
+- Statement: at most 600 characters, about 80 words.
 - Starter code and reference solution: at most 2,000 characters each.
 - Test description: at most 200 characters.
 - Arguments and expected value of one test: at most 2,048 characters of JSON together.

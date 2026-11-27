@@ -106,7 +106,7 @@ function codeRules(topic: TopicId): string {
             "The exercise is logic that runs in a React app without rendering: a reducer, a state-update function, a selector or a validation function. Never write a component, never call a hook (`useState`, `useReducer` or any other `use...` function) and never use JSX.",
           ]
         : []),
-      "The statement says what the function receives and what it returns, with one short example.",
+      "The statement says what the function receives and what it returns, with one short example on a single line. Describe the shape of an object in words instead of writing it out in full; the tests carry the other cases.",
       "Arguments and return values are JSON values: objects, arrays, strings, numbers, booleans and null. The function may use other values, such as `Map` or `Set`, internally.",
       "Write 3 to 6 tests. Each one has a short description, its arguments as a JSON array and its expected return value as JSON. Results are compared with the expected value by deep equality. At least one test covers an edge case.",
       `When the concept is about ${immutability}, at least one test sets \`checksImmutability\` to true: that test also checks that the function does not change its arguments.`,
@@ -123,7 +123,8 @@ function lengthLimits(kind: QuestionKind): string {
     bullets(
       kind === "code"
         ? [
-            `Statement: at most ${chars(LIMITS.prompt)}.`,
+            // Models count words better than characters: 80 words leave a margin under 600.
+            `Statement: at most ${chars(LIMITS.prompt)}, about 80 words.`,
             `Starter code and reference solution: at most ${chars(LIMITS.code)} each.`,
             `Test description: at most ${chars(LIMITS.testDescription)}.`,
             `Arguments and expected value of one test: at most ${chars(LIMITS.testJson)} of JSON together.`,

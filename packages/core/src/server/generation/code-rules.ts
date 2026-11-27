@@ -35,16 +35,18 @@ function structureRule(draft: CodeExerciseDraft): RetryReason | null {
 
 function lengthRule(draft: CodeExerciseDraft): RetryReason | null {
   if (draft.prompt.length > LIMITS.prompt) {
-    return { rule: "field-too-long", field: "prompt" };
+    return { rule: "field-too-long", field: "prompt", length: draft.prompt.length };
   }
-  if (draft.starterCode.length > LIMITS.code || draft.referenceSolution.length > LIMITS.code) {
-    return { rule: "field-too-long", field: "code" };
+  const longestCode = Math.max(draft.starterCode.length, draft.referenceSolution.length);
+  if (longestCode > LIMITS.code) {
+    return { rule: "field-too-long", field: "code", length: longestCode };
   }
-  if (draft.tests.some((test) => test.description.length > LIMITS.testDescription)) {
-    return { rule: "field-too-long", field: "test-description" };
+  const longestDescription = Math.max(...draft.tests.map((test) => test.description.length));
+  if (longestDescription > LIMITS.testDescription) {
+    return { rule: "field-too-long", field: "test-description", length: longestDescription };
   }
   if (draft.explanation.length > LIMITS.explanation) {
-    return { rule: "field-too-long", field: "explanation" };
+    return { rule: "field-too-long", field: "explanation", length: draft.explanation.length };
   }
   return null;
 }

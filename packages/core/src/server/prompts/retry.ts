@@ -35,7 +35,8 @@ export type RetryReason =
   | { readonly rule: "correct-count"; readonly count: number }
   | { readonly rule: "no-incorrect-option" }
   | { readonly rule: "duplicate-options" }
-  | { readonly rule: "field-too-long"; readonly field: LimitedField }
+  /** `length` is the length of the longest value of `field` in the draft. */
+  | { readonly rule: "field-too-long"; readonly field: LimitedField; readonly length: number }
   | { readonly rule: "snippet-language" }
   /** `question` is the 1-based line of the similar stem in `<previous_questions>`. */
   | { readonly rule: "near-duplicate"; readonly question: number }
@@ -85,6 +86,11 @@ function n(value: number): string {
   return String(Math.trunc(value));
 }
 
+function characters(count: number): string {
+  const whole = Math.trunc(count);
+  return whole === 1 ? "1 character" : `${whole.toLocaleString("en-US")} characters`;
+}
+
 function options(count: number): string {
   return count === 1 ? "1 option" : `${n(count)} options`;
 }
@@ -111,8 +117,12 @@ function ruleSentence(kind: QuestionKind, reason: RetryReason): string {
     case "duplicate-options":
       return "Two options had the same text.";
     case "field-too-long": {
-      const [name, limit] = FIELDS[reason.field];
-      return `${name} was longer than ${limit.toLocaleString("en-US")} characters.`;
+      const [fieldName, limit] = FIELDS[reason.field];
+      // The code-exercise prompt calls its prompt the statement.
+      const name = kind === "code" && reason.field === "prompt" ? "The statement" : fieldName;
+      // Models count characters poorly: the excess gives them a concrete target.
+      const excess = Math.max(1, Math.trunc(reason.length) - limit);
+      return `${name} was ${characters(reason.length)} long, over the limit of ${characters(limit)}. Shorten it by at least ${characters(excess)}.`;
     }
     case "snippet-language":
       return 'The snippet language was wrong: use "jsx" only for a React snippet that contains JSX.';
