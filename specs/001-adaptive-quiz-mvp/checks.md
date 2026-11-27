@@ -11,7 +11,7 @@ This document records the manual checks of plan §16.3. They run before the firs
 | Id | Check | Task | Status |
 | --- | --- | --- | --- |
 | M1 | Quality gate on generated questions | T18 | Not run |
-| M2 | Latency on the deployed demo | T29 | Failed (2026-11-27) |
+| M2 | Latency on the deployed demo | T29 | Failed twice (2026-11-27); a third run follows |
 | M3 | Visitor IP reaches the API through the rewrite | T28 | Passed (2026-11-26) |
 | M4 | Spend-limit behaviour on a test workspace | T28 | Passed (2026-11-26) |
 | M5 | Screen reader and keyboard pass | T29 | Keyboard passed (2026-11-27); screen reader partly checked, not blocking |
@@ -87,7 +87,7 @@ Covers NFR-1, as amended on 2026-11-27: a loading indicator within 200 ms of any
 
 ### Pass condition
 
-As amended on 2026-11-27 (plan §16.3): every session completes; the loading indicator appears within 200 ms; the first question is ready in a median under 8 s; with prefetch and a 10 s reading pause, the median wait after "Next question" is under 1 s. The time without prefetch is recorded, with no target.
+As amended on 2026-11-27 (plan §16.3): every session completes; the loading indicator appears within 200 ms; the first question is ready in a median under 8 s; with prefetch and a 10 s reading pause, the median wait after "Next question" is under 3 s (under 1 s until the second run, amended after it). The time without prefetch is recorded, with no target.
 
 The first run below used the original condition: a median under 5 s without prefetch, near-instant with prefetch.
 
@@ -118,6 +118,29 @@ Local diagnosis of the React failure (2026-11-27, local API with the workspace's
 One code review failed once as `invalid_output`; the feedback screen then offers Retry and the session goes on (plan §10).
 
 Decision (project owner, 2026-11-27): content quality comes first, so the model call parameters of plan §8.2 stay as they are, effort `medium` included. NFR-1 and the pass condition of M2 are amended instead: the prefetch hides the generation time while the visitor reads the feedback. The React failure must still be fixed, since every session must complete: see the local diagnosis above. M2 runs again on production once these changes are deployed.
+
+#### Second run, after the amendments
+
+| Date | Run by | Deployment | Topic | Sessions | Questions | Median without prefetch | First question (median) | Median wait after "Next question" (10 s pause) | Result |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 2026-11-27 | Claude Code | API production `dpl_DthtEusSmd7pMTjFXuDcp7wrMLLf` (commit 4d91b87) | JavaScript | 2 completed, 1 stopped at question 2 | 21 | 9.6 s | 4.2 s | 0.10 s | Failed: a session stopped |
+| 2026-11-27 | Claude Code | Same | React | 1 completed, 1 stopped at question 8 | 17 | 11.8 s | 5.9 s | 1.82 s | Failed: a session stopped |
+
+Over the 38 questions: median 11.1 s without prefetch; first question 4.9 s; median wait after "Next question" 1.27 s, 14 of 33 waits under 1 s, the longest 16.3 s. The loading status appeared 3 to 6 ms after Start.
+
+Findings:
+
+- **The 1 s wait was too tight.** The wait is about the generation time minus the reading time, and half the questions take more than 10 s to generate. The project owner amended the target to 3 s (plan §16.3, 2026-11-27); against it, this run's 1.27 s passes. The sessions that stopped still fail the run.
+- **A statement went over the new limit.** Asked for about 120 words, a React statement ran to 942 characters (limit 900), and the retry then wrote an explanation of 801 characters (limit 800): `generation_failed` at question 8. The retry message had asked to cut "at least 1 character". Asked for about 80 words, statements had stayed under 760 characters.
+- **A response did not reach the browser.** In the first JavaScript session the API logged a 200 for question 2 after 4 s, but the page received no response within 90 s. It happened once, between the quiz's `/api` rewrite and the page; the cause is not known. The M2 script now records failed requests and a screenshot when a session stops, so a repeat can be diagnosed.
+
+Changes after the second run, checked locally (2026-11-27, local API):
+
+| Change | React sessions | Rejections | Sessions stopped | Result |
+| --- | --- | --- | --- | --- |
+| About 80 words asked for a statement (limit 900); a retried draft is asked to stay under 80 % of the limit | 3 | No statement over its limit in 20 questions; an option of 223 characters and an explanation of 807 characters, both accepted on retry | 1, at its first question: Upstash did not answer within 2 s (`ai_unavailable`, fail closed as designed) | No generation failure; confirmed by the next M2 run |
+
+The Upstash timeout happened twice in local runs, both times on the first request of a session, and never on production. It is noted here, not investigated further in this task.
 
 
 ## M3 — Visitor IP reaches the API through the rewrite

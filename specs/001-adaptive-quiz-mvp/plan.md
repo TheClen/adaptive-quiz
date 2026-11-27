@@ -1,6 +1,6 @@
 # Plan 001 — Adaptive quiz (MVP)
 
-- Status: Approved (2026-11-17), §1, §3 and §4 amended and approved (2026-11-17), §14 amended and approved (2026-11-20), §4 and §14 amended and approved (2026-11-20, API entry point), §16.2 and §16.3 amended and approved (2026-11-27, M2 after the NFR-1 amendment), §8.4 amended and approved (2026-11-27, code exercise statement limit), §16.2 and §16.3 amended and approved (2026-11-27, screen reader pass of M5 not blocking)
+- Status: Approved (2026-11-17), §1, §3 and §4 amended and approved (2026-11-17), §14 amended and approved (2026-11-20), §4 and §14 amended and approved (2026-11-20, API entry point), §16.2 and §16.3 amended and approved (2026-11-27, M2 after the NFR-1 amendment), §8.4 amended and approved (2026-11-27, code exercise statement limit), §16.2 and §16.3 amended and approved (2026-11-27, screen reader pass of M5 not blocking), §16.3 amended and approved (2026-11-27, M2 wait under 3 s)
 - Date: 2026-11-17
 - Constitution: 1.0.0
 - Spec: [spec.md](spec.md) (Approved 2026-11-17, NFR-1 amended 2026-11-27)
@@ -648,7 +648,7 @@ Run before the first public release, results recorded in `specs/001-adaptive-qui
 | Id | Check | Pass condition |
 | --- | --- | --- |
 | M1 | Quality gate: a script in `apps/api/scripts/` (not a test, excluded from `turbo test`, run by the owner with their own key) generates 30 questions per topic across levels and kinds; the owner reviews each for correctness, single defensible answer, topic, English, variety | At most 2 defective questions per topic; token usage recorded to confirm the cost estimate |
-| M2 | Latency on the deployed demo: 3 sessions per topic, keyboard only, with a 10 s reading pause on each feedback | Every session completes. The loading indicator appears within 200 ms. The first question is ready in a median under 8 s. With prefetch, the median wait after "Next question" is under 1 s. The time without prefetch is recorded, with no target |
+| M2 | Latency on the deployed demo: 3 sessions per topic, keyboard only, with a 10 s reading pause on each feedback | Every session completes. The loading indicator appears within 200 ms. The first question is ready in a median under 8 s. With prefetch, the median wait after "Next question" is under 3 s. The time without prefetch is recorded, with no target |
 | M3 | Visitor IP reaches the API through the rewrite | Two different networks get separate rate-limit counters |
 | M4 | Spend-limit behaviour on a test workspace with a tiny limit | The front-end shows the budget message (AC-8.3) |
 | M5 | Keyboard pass on the deployed demo, at 1024 px and 1440 px; screen reader pass (VoiceOver with Safari) | Blocking: a full session can be completed with the keyboard only; no focus trap. Not blocking: the screen reader pass, recorded with what was checked, and completed when the project owner runs it |
