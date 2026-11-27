@@ -88,6 +88,9 @@ function n(value: number): string {
   return String(Math.trunc(value));
 }
 
+/** The share of a length limit that a retried draft is asked to stay under. */
+const RETRY_LENGTH_TARGET = 0.8;
+
 function characters(count: number): string {
   const whole = Math.trunc(count);
   return whole === 1 ? "1 character" : `${whole.toLocaleString("en-US")} characters`;
@@ -120,9 +123,10 @@ function ruleSentence(kind: QuestionKind, reason: RetryReason): string {
       return "Two options had the same text.";
     case "field-too-long": {
       const [name, limit] = FIELDS[reason.field];
-      // Models count characters poorly: the excess gives them a concrete target.
-      const excess = Math.max(1, Math.trunc(reason.length) - limit);
-      return `${name} was ${characters(reason.length)} long, over the limit of ${characters(limit)}. Shorten it by at least ${characters(excess)}.`;
+      // Models count characters poorly: a target well under the limit leaves them room
+      // to miss it. A draft 1 character over was cut by 1, and stayed over (M2).
+      const target = Math.floor((limit * RETRY_LENGTH_TARGET) / 10) * 10;
+      return `${name} was ${characters(reason.length)} long, over the limit of ${characters(limit)}. Keep it under ${characters(target)}.`;
     }
     case "snippet-language":
       return 'The snippet language was wrong: use "jsx" only for a React snippet that contains JSX.';
