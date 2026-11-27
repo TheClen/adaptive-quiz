@@ -14,7 +14,7 @@ This document records the manual checks of plan §16.3. They run before the firs
 | M2 | Latency on the deployed demo | T29 | Failed (2026-11-27) |
 | M3 | Visitor IP reaches the API through the rewrite | T28 | Passed (2026-11-26) |
 | M4 | Spend-limit behaviour on a test workspace | T28 | Passed (2026-11-26) |
-| M5 | Screen reader and keyboard pass | T29 | Keyboard passed (2026-11-27); screen reader not run |
+| M5 | Screen reader and keyboard pass | T29 | Keyboard passed (2026-11-27); screen reader partly checked, not blocking |
 
 ## M1 — Quality gate on generated questions
 
@@ -191,13 +191,13 @@ Covers NFR-2 (WCAG 2.2 AA, keyboard only, focus can always leave the code editor
 
 ### Pass condition
 
-A full session can be completed with the keyboard only and with VoiceOver; no focus trap (plan §16.3).
+As amended on 2026-11-27 (plan §16.3): a full session can be completed with the keyboard only, with no focus trap. The screen reader pass is not blocking: it is recorded with the points it checked, and completed when the project owner runs it. Automated checks (axe, keyboard) cover labels, roles and focus; only a screen reader confirms what is announced, such as the loading status, the test results and the review.
 
 ### Results
 
 | Date | Run by | Deployment | Pass | Viewports | Scope | Result |
 | --- | --- | --- | --- | --- | --- | --- |
 | 2026-11-27 | Claude Code | API production `dpl_FAtkcjbaDNKAQLLFCyKaEni5gjLM`, quiz at commit 12a42f3 | Keyboard (M2 script, Chromium) | 1024 × 768 (3 sessions), 1440 × 900 (2 sessions) | 3 complete JavaScript sessions, home to summary; 2 React sessions to question 8; 44 questions of all kinds, 8 code exercises | Passed: no focus trap, no axe violation, no horizontal overflow |
-| | | | Screen reader (VoiceOver, Safari) | | | Not run |
+| 2026-11-27 | Project owner | Quiz production | Screen reader (VoiceOver, Safari) | Not recorded | Checklist points 1 and 3 | Partial: the content of the screens is read, and the option groups say what to select. Points 2 and 4 to 7 not checked. VoiceOver used a French voice: a setting of VoiceOver, since the page declares `lang="en"` |
 
-Decision: the keyboard and layout pass is done. The screen reader pass is left to the project owner.
+Decision (project owner, 2026-11-27): the screen reader pass is set aside and does not block the release. The keyboard and layout pass is done, so M5 passes. Points 2 and 4 to 7 of the checklist remain to check: the loading status, the code editor and its test results, the feedback and the review, the summary, and a full session without a focus trap.

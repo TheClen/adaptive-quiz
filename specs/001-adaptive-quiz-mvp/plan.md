@@ -1,6 +1,6 @@
 # Plan 001 — Adaptive quiz (MVP)
 
-- Status: Approved (2026-11-17), §1, §3 and §4 amended and approved (2026-11-17), §14 amended and approved (2026-11-20), §4 and §14 amended and approved (2026-11-20, API entry point), §16.2 and §16.3 amended and approved (2026-11-27, M2 after the NFR-1 amendment), §8.4 amended and approved (2026-11-27, code exercise statement limit)
+- Status: Approved (2026-11-17), §1, §3 and §4 amended and approved (2026-11-17), §14 amended and approved (2026-11-20), §4 and §14 amended and approved (2026-11-20, API entry point), §16.2 and §16.3 amended and approved (2026-11-27, M2 after the NFR-1 amendment), §8.4 amended and approved (2026-11-27, code exercise statement limit), §16.2 and §16.3 amended and approved (2026-11-27, screen reader pass of M5 not blocking)
 - Date: 2026-11-17
 - Constitution: 1.0.0
 - Spec: [spec.md](spec.md) (Approved 2026-11-17, NFR-1 amended 2026-11-27)
@@ -632,7 +632,7 @@ No test calls the Anthropic API or Upstash (principle VI). The `ModelClient` and
 | AC-8.3 | core error mapping, global cap, quiz | unit: billing and spend-limit errors map to `budget_exhausted`; integration: global cap reached returns it; component: message; manual M4 |
 | AC-8.4 | api `onError`, quiz messages | integration: an upstream error containing a fake key and stack trace returns only the catalogue message; component: only catalogue messages are rendered |
 | NFR-1 | quiz loading states, prefetch | component: indicator present in the render right after the click; manual M2 for prefetch and first-question latency |
-| NFR-2 | quiz, CodeMirror setup | component: axe on every screen; e2e: full session keyboard-only, Esc then Tab leaves the editor, axe scan; manual M5 with a screen reader |
+| NFR-2 | quiz, CodeMirror setup | component: axe on every screen; e2e: full session keyboard-only, Esc then Tab leaves the editor, axe scan; manual M5 keyboard pass on the deployed demo, and its screen reader pass when run |
 | NFR-3 | quiz flow, core generation | unit: at most 2 model calls per generated question; e2e: one full session makes 10 question requests, 2 review requests, none for the summary |
 | NFR-4 | api limits | integration: see AC-8.2; `questions` limiter blocks forged states |
 | NFR-5 | core validation pipeline | unit: every broken fixture is rejected; manual M1 quality gate |
@@ -651,7 +651,7 @@ Run before the first public release, results recorded in `specs/001-adaptive-qui
 | M2 | Latency on the deployed demo: 3 sessions per topic, keyboard only, with a 10 s reading pause on each feedback | Every session completes. The loading indicator appears within 200 ms. The first question is ready in a median under 8 s. With prefetch, the median wait after "Next question" is under 1 s. The time without prefetch is recorded, with no target |
 | M3 | Visitor IP reaches the API through the rewrite | Two different networks get separate rate-limit counters |
 | M4 | Spend-limit behaviour on a test workspace with a tiny limit | The front-end shows the budget message (AC-8.3) |
-| M5 | Screen reader pass (VoiceOver with Safari) and keyboard pass on the deployed demo | A full session can be completed; no focus trap |
+| M5 | Keyboard pass on the deployed demo, at 1024 px and 1440 px; screen reader pass (VoiceOver with Safari) | Blocking: a full session can be completed with the keyboard only; no focus trap. Not blocking: the screen reader pass, recorded with what was checked, and completed when the project owner runs it |
 
 ## 17. Decisions for the project owner
 
