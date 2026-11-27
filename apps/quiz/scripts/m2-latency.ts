@@ -6,7 +6,7 @@
  * (principle VI). It is excluded from `turbo test` and run by hand, within the API's
  * limits (plan §11.1): 5 sessions and 60 questions per hour from one IP.
  *
- * Usage: `node scripts/m2-latency.ts --topic javascript [--sessions 3] [--pause 3000]
+ * Usage: `node scripts/m2-latency.ts --topic javascript [--sessions 3] [--pause 10000]
  * [--url https://…] [--headed]`.
  *
  * For each question it records:
@@ -74,7 +74,7 @@ const { values } = parseArgs({
   options: {
     topic: { type: "string" },
     sessions: { type: "string", default: "3" },
-    pause: { type: "string", default: "3000" },
+    pause: { type: "string", default: "10000" },
     url: { type: "string", default: DEFAULT_URL },
     headed: { type: "boolean", default: false },
   },
@@ -335,9 +335,15 @@ if (shown.length > 0) {
     `With prefetch: median ${seconds(median(shown))}, max ${seconds(Math.max(...shown))}`,
   );
 }
+const first = questions.filter((question) => question.position === 1).map((q) => q.readyMs);
+if (first.length > 0) {
+  console.log(`First question: median ${seconds(median(first))} over ${String(first.length)}`);
+}
 if (loading.length > 0) {
   console.log(`Loading status after Start: max ${String(Math.round(Math.max(...loading)))} ms`);
 }
+const completed = sessions.filter((session) => session.completed).length;
+console.log(`Sessions completed: ${String(completed)} of ${String(sessions.length)}`);
 for (const session of sessions) {
   for (const { screen, issue } of session.issues) {
     console.log(`Issue at ${session.viewport}, ${screen}: ${issue}`);

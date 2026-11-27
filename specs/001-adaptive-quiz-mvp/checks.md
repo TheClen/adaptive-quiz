@@ -73,7 +73,7 @@ Decision: not taken yet.
 
 ## M2 — Latency on the deployed demo
 
-Covers NFR-1: a loading indicator within 200 ms of any action that waits for the AI, and a new question usually ready within 5 seconds.
+Covers NFR-1, as amended on 2026-11-27: a loading indicator within 200 ms of any action that waits for the AI, and the next question generated while the visitor reads the feedback, so it is usually ready when they move on. Content quality takes priority over speed.
 
 ### How to run
 
@@ -81,13 +81,15 @@ Covers NFR-1: a loading indicator within 200 ms of any action that waits for the
 2. The API allows 5 sessions per hour from one IP (plan §11.1), so the sixth session waits an hour.
 3. For each question the script records:
    - **without prefetch**: from the key press on Submit (or on the topic, for question 1) to the end of the `next-question` response;
-   - **with prefetch**: from the key press on "Next question", after a reading pause of 3 s on the feedback (`--pause`), to the next question's heading taking focus;
+   - **with prefetch**: from the key press on "Next question", after a reading pause on the feedback (10 s by default, `--pause` in milliseconds), to the next question's heading taking focus;
    - for question 1, the time to the loading status.
 4. It writes the results to `apps/quiz/test-results/m2-<topic>-<time>.json`, which git ignores. The API's runtime logs give each request's duration, attempts, rejections and output tokens.
 
 ### Pass condition
 
-Median under 5 s without prefetch, near-instant with prefetch (plan §16.3).
+As amended on 2026-11-27 (plan §16.3): every session completes; the loading indicator appears within 200 ms; the first question is ready in a median under 8 s; with prefetch and a 10 s reading pause, the median wait after "Next question" is under 1 s. The time without prefetch is recorded, with no target.
+
+The first run below used the original condition: a median under 5 s without prefetch, near-instant with prefetch.
 
 ### Results
 
@@ -105,7 +107,7 @@ Findings:
 - **React code exercises often fail.** 3 of the 4 React code exercises were rejected as `field-too-long`, and 2 of them failed both attempts: the API returned `generation_failed` and both React sessions stopped at question 8 on the error screen. The log line names the rule but not the field, so the field that is too long is not known yet.
 - The third React session was not run: it would hit the same failure.
 
-Decision: pending the project owner. The pass condition cannot be met by a fix in the front-end: it needs a change to the model call parameters of plan §8.2 or to the pass condition itself, both amendments of an approved document.
+Decision (project owner, 2026-11-27): content quality comes first, so the model call parameters of plan §8.2 stay as they are, effort `medium` included. NFR-1 and the pass condition of M2 are amended instead: the prefetch hides the generation time while the visitor reads the feedback. The React failure must still be fixed, since every session must complete.
 
 
 ## M3 — Visitor IP reaches the API through the rewrite
