@@ -34,7 +34,7 @@ import {
 } from "@ai-in-learning/shared-types";
 import { describe, expect, it } from "vitest";
 
-import { type App, createApp } from "../app.js";
+import { type App, createApp } from "../create-app.js";
 import { loadEnv } from "../env.js";
 import { ERROR_CATALOGUE } from "../http/errors.js";
 import type { RequestLogLine } from "../http/logging.js";

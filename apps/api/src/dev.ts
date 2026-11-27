@@ -4,7 +4,7 @@
  */
 import { serve } from "@hono/node-server";
 
-import { createApp } from "./app.js";
+import { createApp } from "./create-app.js";
 import { loadEnv } from "./env.js";
 
 /** The quiz app's Vite proxy forwards `/api/*` here. */
