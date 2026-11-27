@@ -299,15 +299,16 @@ describe("isolation (AC-3.5)", () => {
     expect(second[0]?.passed).toBe(true);
   });
 
-  // The hog allocates 1 MB strings natively: filling 32 MB element by element took
-  // about 1.5 s locally and up to 25 s on CI runners shared with other test tasks.
-  // The timeout stays above the default 5 s for those runners.
-  it("limits memory to 32 MB and recovers for the next run", { timeout: 20_000 }, async () => {
+  // The hog allocates 1 MB buffers, so it reaches 32 MB in a few dozen native
+  // allocations, well within the 2 s time limit. Filling arrays element by element
+  // took up to 25 s on CI runners shared with other test tasks, and concatenated
+  // strings may share their storage instead of allocating it. The test timeout
+  // covers the runner's recovery on those slow runners.
+  it("limits memory to 32 MB and recovers for the next run", { timeout: 60_000 }, async () => {
     const results = await runner.run({
       code: `function hog() {
         const chunks = [];
-        const block = "x".repeat(1 << 20);
-        while (true) chunks.push(block + chunks.length);
+        while (true) chunks.push(new ArrayBuffer(1 << 20));
       }`,
       functionName: "hog",
       tests: [makeTest("t", [], 0)],
