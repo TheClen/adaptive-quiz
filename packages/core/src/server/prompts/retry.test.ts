@@ -26,7 +26,7 @@ const REASONS: readonly (readonly [QuestionKind, RetryReason])[] = [
   ["single", { rule: "field-too-long", field: "prompt", length: 742 }],
   ["single", { rule: "field-too-long", field: "option", length: 201 }],
   ["single", { rule: "field-too-long", field: "explanation", length: 1_250 }],
-  ["code", { rule: "field-too-long", field: "prompt", length: 655 }],
+  ["code", { rule: "field-too-long", field: "statement", length: 955 }],
   ["code", { rule: "field-too-long", field: "code", length: 2_400 }],
   ["code", { rule: "field-too-long", field: "test-description", length: 230 }],
   ["single", { rule: "snippet-language" }],

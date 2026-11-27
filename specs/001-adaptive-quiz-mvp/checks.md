@@ -107,7 +107,17 @@ Findings:
 - **React code exercises often fail.** 3 of the 4 React code exercises were rejected as `field-too-long`, and 2 of them failed both attempts: the API returned `generation_failed` and both React sessions stopped at question 8 on the error screen. The log line names the rule but not the field, so the field that is too long is not known yet.
 - The third React session was not run: it would hit the same failure.
 
-Decision (project owner, 2026-11-27): content quality comes first, so the model call parameters of plan §8.2 stay as they are, effort `medium` included. NFR-1 and the pass condition of M2 are amended instead: the prefetch hides the generation time while the visitor reads the feedback. The React failure must still be fixed, since every session must complete.
+Local diagnosis of the React failure (2026-11-27, local API with the workspace's local key, commits after 12a42f3):
+
+| Change | React sessions | Code exercises rejected as too long | Sessions stopped by it | Result |
+| --- | --- | --- | --- | --- |
+| None (rejection details added to the log) | 1 | 1 of 1 at question 8: statement too long, both attempts | 1 | The statement (prompt) of the exercise is over its 600-character limit |
+| Retry message gives the length and the excess; about 80 words asked | 3 | 2 of 6, both at question 8: 645 then 626 characters (failed), 756 then accepted | 1 (a third session stopped once on an Upstash timeout, `ai_unavailable`, as designed) | Closer, not fixed |
+| Statement limit of code exercises raised to 900 characters (plan §8.4 amended), about 120 words asked | 1 | 0 of 2 | 0 | Fixed on this run; confirmed by the next M2 run |
+
+One code review failed once as `invalid_output`; the feedback screen then offers Retry and the session goes on (plan §10).
+
+Decision (project owner, 2026-11-27): content quality comes first, so the model call parameters of plan §8.2 stay as they are, effort `medium` included. NFR-1 and the pass condition of M2 are amended instead: the prefetch hides the generation time while the visitor reads the feedback. The React failure must still be fixed, since every session must complete: see the local diagnosis above. M2 runs again on production once these changes are deployed.
 
 
 ## M3 — Visitor IP reaches the API through the rewrite

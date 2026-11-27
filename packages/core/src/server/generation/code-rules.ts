@@ -34,8 +34,8 @@ function structureRule(draft: CodeExerciseDraft): RetryReason | null {
 }
 
 function lengthRule(draft: CodeExerciseDraft): RetryReason | null {
-  if (draft.prompt.length > LIMITS.prompt) {
-    return { rule: "field-too-long", field: "prompt", length: draft.prompt.length };
+  if (draft.prompt.length > LIMITS.exercisePrompt) {
+    return { rule: "field-too-long", field: "statement", length: draft.prompt.length };
   }
   const longestCode = Math.max(draft.starterCode.length, draft.referenceSolution.length);
   if (longestCode > LIMITS.code) {

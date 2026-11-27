@@ -127,6 +127,12 @@ describe("choice question fields", () => {
 
 describe("code exercise", () => {
   const [test1, test2, test3] = codeExercise.tests;
+
+  it(`accepts a statement up to ${String(LIMITS.exercisePrompt)} characters`, () => {
+    const prompt = (length: number) => ({ ...codeExercise, prompt: "x".repeat(length) });
+    expect(accepts(prompt(LIMITS.exercisePrompt))).toBe(true);
+    expect(accepts(prompt(LIMITS.exercisePrompt + 1))).toBe(false);
+  });
   const extraTests = ["t4", "t5", "t6", "t7"].map((id) => ({ ...test1, id }));
 
   it("accepts 6 tests and rejects 2 or 7", () => {

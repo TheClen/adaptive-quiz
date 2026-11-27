@@ -70,9 +70,9 @@ Your previous item was rejected. The explanation was 1,250 characters long, over
 Write a new item that follows every rule.
 </retry>
 
---- code {"rule":"field-too-long","field":"prompt","length":655}
+--- code {"rule":"field-too-long","field":"statement","length":955}
 <retry>
-Your previous item was rejected. The statement was 655 characters long, over the limit of 600 characters. Shorten it by at least 55 characters.
+Your previous item was rejected. The statement was 955 characters long, over the limit of 900 characters. Shorten it by at least 55 characters.
 Write a new item that follows every rule.
 </retry>
 

@@ -20,7 +20,8 @@ export type ForbiddenConstruct =
   | "date-now";
 
 /** A field with a length limit (plan §8.4 step 2). */
-export type LimitedField = "prompt" | "option" | "explanation" | "code" | "test-description";
+export type LimitedField =
+  "prompt" | "statement" | "option" | "explanation" | "code" | "test-description";
 
 /**
  * Why the first draft was rejected (plan §8.4). It carries only enums and numbers,
@@ -75,6 +76,7 @@ const CONSTRUCTS = {
 
 const FIELDS = {
   prompt: ["The question", LIMITS.prompt],
+  statement: ["The statement", LIMITS.exercisePrompt],
   option: ["An option", LIMITS.optionText],
   explanation: ["The explanation", LIMITS.explanation],
   code: ["A piece of code", LIMITS.code],
@@ -117,9 +119,7 @@ function ruleSentence(kind: QuestionKind, reason: RetryReason): string {
     case "duplicate-options":
       return "Two options had the same text.";
     case "field-too-long": {
-      const [fieldName, limit] = FIELDS[reason.field];
-      // The code-exercise prompt calls its prompt the statement.
-      const name = kind === "code" && reason.field === "prompt" ? "The statement" : fieldName;
+      const [name, limit] = FIELDS[reason.field];
       // Models count characters poorly: the excess gives them a concrete target.
       const excess = Math.max(1, Math.trunc(reason.length) - limit);
       return `${name} was ${characters(reason.length)} long, over the limit of ${characters(limit)}. Shorten it by at least ${characters(excess)}.`;

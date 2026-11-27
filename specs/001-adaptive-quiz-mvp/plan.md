@@ -1,6 +1,6 @@
 # Plan 001 — Adaptive quiz (MVP)
 
-- Status: Approved (2026-11-17), §1, §3 and §4 amended and approved (2026-11-17), §14 amended and approved (2026-11-20), §4 and §14 amended and approved (2026-11-20, API entry point), §16.2 and §16.3 amended and approved (2026-11-27, M2 after the NFR-1 amendment)
+- Status: Approved (2026-11-17), §1, §3 and §4 amended and approved (2026-11-17), §14 amended and approved (2026-11-20), §4 and §14 amended and approved (2026-11-20, API entry point), §16.2 and §16.3 amended and approved (2026-11-27, M2 after the NFR-1 amendment), §8.4 amended and approved (2026-11-27, code exercise statement limit)
 - Date: 2026-11-17
 - Constitution: 1.0.0
 - Spec: [spec.md](spec.md) (Approved 2026-11-17, NFR-1 amended 2026-11-27)
@@ -361,7 +361,7 @@ Prompts are built by pure functions in `core/server/prompts`, snapshot-tested.
 1. **Structure.** The SDK parses the output against the Zod draft schema. Constraints the API schema cannot express (lengths, array sizes) are checked again by Zod in `core`.
 2. **Domain rules.**
    - Single choice: exactly 4 options, exactly 1 correct. Multiple choice: 4 to 6 options, at least 2 correct, at least 1 incorrect.
-   - Option texts are distinct after normalisation; field lengths are within limits (prompt 600, option 200, explanation 800, code 2,000 characters).
+   - Option texts are distinct after normalisation; field lengths are within limits (prompt 600, code exercise statement 900, option 200, explanation 800, code 2,000 characters). A code exercise's statement says what the function receives and returns, with an example; at high levels it did not fit in 600 characters (M2, 2026-11-27).
    - Snippet language is `javascript`, or `jsx` for React.
    - **Near-duplicate check (AC-5.3).** The normalised stem (lowercase, punctuation and whitespace collapsed) is compared with every previous stem using word-trigram Jaccard similarity. A score of 0.6 or more rejects the draft.
 3. **Code exercise checks.**

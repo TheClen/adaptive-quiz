@@ -123,8 +123,8 @@ function lengthLimits(kind: QuestionKind): string {
     bullets(
       kind === "code"
         ? [
-            // Models count words better than characters: 80 words leave a margin under 600.
-            `Statement: at most ${chars(LIMITS.prompt)}, about 80 words.`,
+            // Models count words better than characters: 120 words leave a margin under 900.
+            `Statement: at most ${chars(LIMITS.exercisePrompt)}, about 120 words.`,
             `Starter code and reference solution: at most ${chars(LIMITS.code)} each.`,
             `Test description: at most ${chars(LIMITS.testDescription)}.`,
             `Arguments and expected value of one test: at most ${chars(LIMITS.testJson)} of JSON together.`,

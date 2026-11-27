@@ -204,8 +204,8 @@ const BROKEN: readonly BrokenCase[] = [
   {
     name: "oversized prompt",
     topic: "react",
-    draft: { ...react, prompt: "p".repeat(LIMITS.prompt + 1) },
-    reason: { rule: "field-too-long", field: "prompt", length: LIMITS.prompt + 1 },
+    draft: { ...react, prompt: "p".repeat(LIMITS.exercisePrompt + 1) },
+    reason: { rule: "field-too-long", field: "statement", length: LIMITS.exercisePrompt + 1 },
   },
   {
     name: "draft with 2 tests",
