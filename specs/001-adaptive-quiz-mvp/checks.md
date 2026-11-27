@@ -1,6 +1,6 @@
 # Checks 001 — Adaptive quiz (MVP)
 
-- Date: 2026-11-19
+- Date: 2026-11-19, updated 2026-11-27
 - Plan: [plan.md](plan.md), [section 16.3](plan.md#163-documented-manual-checks)
 - Tasks: [tasks.md](tasks.md) (M1 in T18, M3 and M4 in T28, M2 and M5 in T29)
 
@@ -11,10 +11,10 @@ This document records the manual checks of plan §16.3. They run before the firs
 | Id | Check | Task | Status |
 | --- | --- | --- | --- |
 | M1 | Quality gate on generated questions | T18 | Not run |
-| M2 | Latency on the deployed demo | T29 | Not run |
+| M2 | Latency on the deployed demo | T29 | Failed (2026-11-27) |
 | M3 | Visitor IP reaches the API through the rewrite | T28 | Passed (2026-11-26) |
 | M4 | Spend-limit behaviour on a test workspace | T28 | Passed (2026-11-26) |
-| M5 | Screen reader and keyboard pass | T29 | Not run |
+| M5 | Screen reader and keyboard pass | T29 | Keyboard passed (2026-11-27); screen reader not run |
 
 ## M1 — Quality gate on generated questions
 
@@ -73,7 +73,40 @@ Decision: not taken yet.
 
 ## M2 — Latency on the deployed demo
 
-Recorded in T29.
+Covers NFR-1: a loading indicator within 200 ms of any action that waits for the AI, and a new question usually ready within 5 seconds.
+
+### How to run
+
+1. Run `node scripts/m2-latency.ts --topic javascript` from `apps/quiz`, then the same with `--topic react`. Each run plays 3 sessions on the production demo (`--url` to change it) in headless Chromium, keyboard only, and answers from the question in the response: correctly, except positions 3 and 8.
+2. The API allows 5 sessions per hour from one IP (plan §11.1), so the sixth session waits an hour.
+3. For each question the script records:
+   - **without prefetch**: from the key press on Submit (or on the topic, for question 1) to the end of the `next-question` response;
+   - **with prefetch**: from the key press on "Next question", after a reading pause of 3 s on the feedback (`--pause`), to the next question's heading taking focus;
+   - for question 1, the time to the loading status.
+4. It writes the results to `apps/quiz/test-results/m2-<topic>-<time>.json`, which git ignores. The API's runtime logs give each request's duration, attempts, rejections and output tokens.
+
+### Pass condition
+
+Median under 5 s without prefetch, near-instant with prefetch (plan §16.3).
+
+### Results
+
+| Date | Run by | Deployment | Topic | Sessions | Questions | Median without prefetch | Median with prefetch (3 s pause) | Result |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 2026-11-27 | Claude Code | API production `dpl_FAtkcjbaDNKAQLLFCyKaEni5gjLM` (commit 12a42f3) | JavaScript | 3 completed | 30 | 9.7 s | 6.4 s (2 sessions; the first run did not measure it) | Failed |
+| 2026-11-27 | Claude Code | Same | React | 2 stopped at question 8 | 14 | 10.8 s | 8.1 s | Failed |
+
+Over the 44 questions: median 10.2 s without prefetch, from 3.7 s to 31.2 s, and 3 questions under 5 s. By kind: single choice 8.9 s (23), multiple choice 11.1 s (13), code exercise 13.2 s (8). With the 3 s reading pause, no question showed in under 0.5 s; the median wait after "Next question" was 7.5 s. The loading status appeared 3 to 5 ms after Start, within the 200 ms of NFR-1.
+
+Findings:
+
+- **The model's output drives the latency.** The API's logs show 500 to 8,200 output tokens per request, adaptive thinking included, at about 200 tokens per second: a single-choice question with 1,700 output tokens takes about 9 s on the server. The first question of a session, at level 3 with a short output, is the only one usually under 5 s. The parameters are those of plan §8.2: Claude Haiku 5.5, adaptive thinking, effort `medium`.
+- **A rejected draft doubles the wait.** 8 of the 44 requests needed a second attempt (`near-duplicate` 4 times, `field-too-long` 3 times, `correct-count` once) and took 21 to 31 s.
+- **React code exercises often fail.** 3 of the 4 React code exercises were rejected as `field-too-long`, and 2 of them failed both attempts: the API returned `generation_failed` and both React sessions stopped at question 8 on the error screen. The log line names the rule but not the field, so the field that is too long is not known yet.
+- The third React session was not run: it would hit the same failure.
+
+Decision: pending the project owner. The pass condition cannot be met by a fix in the front-end: it needs a change to the model call parameters of plan §8.2 or to the pass condition itself, both amendments of an approved document.
+
 
 ## M3 — Visitor IP reaches the API through the rewrite
 
@@ -128,4 +161,31 @@ Findings:
 
 ## M5 — Screen reader and keyboard pass
 
-Recorded in T29.
+Covers NFR-2 (WCAG 2.2 AA, keyboard only, focus can always leave the code editor) and NFR-7 (desktop layouts at 1024 px and 1440 px).
+
+### How to run
+
+**Keyboard and layout.** The M2 script plays every session with the keyboard only: it reaches every control with Tab (at most 60 presses, otherwise it reports a focus trap), checks options with Space and the arrow keys, leaves the code editor with Escape then Tab, and presses buttons with Enter. On every screen it runs an axe scan with all rules and checks that the page has no horizontal overflow. Sessions alternate between 1024 × 768 and 1440 × 900.
+
+**Screen reader.** 👤 With VoiceOver (Cmd+F5) and Safari on the production demo, complete a session of each topic at 1440 px, with a code exercise answered and its review read, and check that:
+
+1. every new screen announces its heading (focus moves to the `h1`, plan §13.3);
+2. the loading state is announced as a status;
+3. the prompt, the snippet and each option are read, and the option group says whether one or several answers are expected;
+4. the code editor is announced as "Your solution", its hint about Escape then Tab is read, and the test results are announced after "Run tests";
+5. the verdict, the explanation and the AI review are read on the feedback screen;
+6. the summary reads the score, the final level, the level chart's text alternative and the concepts to review;
+7. at no point does focus get stuck or land on an element that is not announced.
+
+### Pass condition
+
+A full session can be completed with the keyboard only and with VoiceOver; no focus trap (plan §16.3).
+
+### Results
+
+| Date | Run by | Deployment | Pass | Viewports | Scope | Result |
+| --- | --- | --- | --- | --- | --- | --- |
+| 2026-11-27 | Claude Code | API production `dpl_FAtkcjbaDNKAQLLFCyKaEni5gjLM`, quiz at commit 12a42f3 | Keyboard (M2 script, Chromium) | 1024 × 768 (3 sessions), 1440 × 900 (2 sessions) | 3 complete JavaScript sessions, home to summary; 2 React sessions to question 8; 44 questions of all kinds, 8 code exercises | Passed: no focus trap, no axe violation, no horizontal overflow |
+| | | | Screen reader (VoiceOver, Safari) | | | Not run |
+
+Decision: the keyboard and layout pass is done. The screen reader pass is left to the project owner.
