@@ -35,7 +35,7 @@ Write everything in English: the statement, the code, its comments, the test des
 
 # Length limits
 
-- Statement: at most 900 characters, about 120 words.
+- Statement: at most 900 characters, about 80 words.
 - Starter code and reference solution: at most 2,000 characters each.
 - Test description: at most 200 characters.
 - Arguments and expected value of one test: at most 2,048 characters of JSON together.
