@@ -52,33 +52,39 @@ Your previous item was rejected. Two options had the same text.
 Write a new item that follows every rule.
 </retry>
 
---- single {"rule":"field-too-long","field":"prompt"}
+--- single {"rule":"field-too-long","field":"prompt","length":742}
 <retry>
-Your previous item was rejected. The question was longer than 600 characters.
+Your previous item was rejected. The question was 742 characters long, over the limit of 600 characters. Shorten it by at least 142 characters.
 Write a new item that follows every rule.
 </retry>
 
---- single {"rule":"field-too-long","field":"option"}
+--- single {"rule":"field-too-long","field":"option","length":201}
 <retry>
-Your previous item was rejected. An option was longer than 200 characters.
+Your previous item was rejected. An option was 201 characters long, over the limit of 200 characters. Shorten it by at least 1 character.
 Write a new item that follows every rule.
 </retry>
 
---- single {"rule":"field-too-long","field":"explanation"}
+--- single {"rule":"field-too-long","field":"explanation","length":1250}
 <retry>
-Your previous item was rejected. The explanation was longer than 800 characters.
+Your previous item was rejected. The explanation was 1,250 characters long, over the limit of 800 characters. Shorten it by at least 450 characters.
 Write a new item that follows every rule.
 </retry>
 
---- code {"rule":"field-too-long","field":"code"}
+--- code {"rule":"field-too-long","field":"statement","length":955}
 <retry>
-Your previous item was rejected. A piece of code was longer than 2,000 characters.
+Your previous item was rejected. The statement was 955 characters long, over the limit of 900 characters. Shorten it by at least 55 characters.
 Write a new item that follows every rule.
 </retry>
 
---- code {"rule":"field-too-long","field":"test-description"}
+--- code {"rule":"field-too-long","field":"code","length":2400}
 <retry>
-Your previous item was rejected. A test description was longer than 200 characters.
+Your previous item was rejected. A piece of code was 2,400 characters long, over the limit of 2,000 characters. Shorten it by at least 400 characters.
+Write a new item that follows every rule.
+</retry>
+
+--- code {"rule":"field-too-long","field":"test-description","length":230}
+<retry>
+Your previous item was rejected. A test description was 230 characters long, over the limit of 200 characters. Shorten it by at least 30 characters.
 Write a new item that follows every rule.
 </retry>
 

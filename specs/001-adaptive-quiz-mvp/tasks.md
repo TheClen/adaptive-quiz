@@ -344,7 +344,7 @@ flowchart LR
 - **Plan:** §16.3 (M2, M5)
 - **Covers:** NFR-1, NFR-2, NFR-7
 - **Deliverables:** results of M2 (3 sessions per topic, time to next question) and M5 (VoiceOver with Safari, keyboard only, at 1024 px and 1440 px) recorded in `checks.md`. Any defect found becomes a fix in this task, or a new task if it is large.
-- **Done when:** M2 shows a median under 5 s without prefetch; M5 completes a full session with no focus trap; `checks.md` lists every manual check with date and result.
+- **Done when:** M2 passes as amended on 2026-11-27 (plan §16.3: every session completes, first question in a median under 8 s, median wait under 1 s after "Next question" with a 10 s reading pause); M5's keyboard pass completes a full session with no focus trap (its screen reader pass is not blocking, plan §16.3 as amended on 2026-11-27); `checks.md` lists every manual check with date and result.
 
 ### T30 — Release review
 

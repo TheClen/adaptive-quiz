@@ -41,16 +41,17 @@ function countRule(kind: ChoiceKind, draft: ChoiceDraft): RetryReason | null {
 
 function lengthRule(draft: ChoiceDraft): RetryReason | null {
   if (draft.prompt.length > LIMITS.prompt) {
-    return { rule: "field-too-long", field: "prompt" };
+    return { rule: "field-too-long", field: "prompt", length: draft.prompt.length };
   }
-  if (draft.options.some((option) => option.text.length > LIMITS.optionText)) {
-    return { rule: "field-too-long", field: "option" };
+  const longestOption = Math.max(...draft.options.map((option) => option.text.length));
+  if (longestOption > LIMITS.optionText) {
+    return { rule: "field-too-long", field: "option", length: longestOption };
   }
   if (draft.explanation.length > LIMITS.explanation) {
-    return { rule: "field-too-long", field: "explanation" };
+    return { rule: "field-too-long", field: "explanation", length: draft.explanation.length };
   }
   if (draft.snippet !== null && draft.snippet.source.length > LIMITS.code) {
-    return { rule: "field-too-long", field: "code" };
+    return { rule: "field-too-long", field: "code", length: draft.snippet.source.length };
   }
   return null;
 }

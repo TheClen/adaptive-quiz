@@ -3,6 +3,8 @@ import { z } from "zod";
 /** Field length limits shared by the API and the validation pipeline (plan §8.4). */
 export const LIMITS = {
   prompt: 600,
+  /** The statement of a code exercise, which describes inputs, output and an example. */
+  exercisePrompt: 900,
   optionText: 200,
   explanation: 800,
   code: 2_000,
@@ -121,7 +123,7 @@ export type MultipleChoiceQuestion = z.infer<typeof MultipleChoiceQuestion>;
 export const CodeExercise = z
   .object({
     kind: z.literal("code"),
-    prompt: z.string().min(1).max(LIMITS.prompt),
+    prompt: z.string().min(1).max(LIMITS.exercisePrompt),
     functionName: z.string().regex(/^[a-z][A-Za-z0-9]*$/),
     starterCode: z.string().min(1).max(LIMITS.code),
     tests: z.array(ExerciseTest).min(3).max(6),

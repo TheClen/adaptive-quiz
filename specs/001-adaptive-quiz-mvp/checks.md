@@ -1,6 +1,6 @@
 # Checks 001 — Adaptive quiz (MVP)
 
-- Date: 2026-11-19
+- Date: 2026-11-19, updated 2026-11-27
 - Plan: [plan.md](plan.md), [section 16.3](plan.md#163-documented-manual-checks)
 - Tasks: [tasks.md](tasks.md) (M1 in T18, M3 and M4 in T28, M2 and M5 in T29)
 
@@ -11,10 +11,10 @@ This document records the manual checks of plan §16.3. They run before the firs
 | Id | Check | Task | Status |
 | --- | --- | --- | --- |
 | M1 | Quality gate on generated questions | T18 | Not run |
-| M2 | Latency on the deployed demo | T29 | Not run |
+| M2 | Latency on the deployed demo | T29 | Failed (2026-11-27) |
 | M3 | Visitor IP reaches the API through the rewrite | T28 | Passed (2026-11-26) |
 | M4 | Spend-limit behaviour on a test workspace | T28 | Passed (2026-11-26) |
-| M5 | Screen reader and keyboard pass | T29 | Not run |
+| M5 | Screen reader and keyboard pass | T29 | Keyboard passed (2026-11-27); screen reader partly checked, not blocking |
 
 ## M1 — Quality gate on generated questions
 
@@ -73,7 +73,52 @@ Decision: not taken yet.
 
 ## M2 — Latency on the deployed demo
 
-Recorded in T29.
+Covers NFR-1, as amended on 2026-11-27: a loading indicator within 200 ms of any action that waits for the AI, and the next question generated while the visitor reads the feedback, so it is usually ready when they move on. Content quality takes priority over speed.
+
+### How to run
+
+1. Run `node scripts/m2-latency.ts --topic javascript` from `apps/quiz`, then the same with `--topic react`. Each run plays 3 sessions on the production demo (`--url` to change it) in headless Chromium, keyboard only, and answers from the question in the response: correctly, except positions 3 and 8.
+2. The API allows 5 sessions per hour from one IP (plan §11.1), so the sixth session waits an hour.
+3. For each question the script records:
+   - **without prefetch**: from the key press on Submit (or on the topic, for question 1) to the end of the `next-question` response;
+   - **with prefetch**: from the key press on "Next question", after a reading pause on the feedback (10 s by default, `--pause` in milliseconds), to the next question's heading taking focus;
+   - for question 1, the time to the loading status.
+4. It writes the results to `apps/quiz/test-results/m2-<topic>-<time>.json`, which git ignores. The API's runtime logs give each request's duration, attempts, rejections and output tokens.
+
+### Pass condition
+
+As amended on 2026-11-27 (plan §16.3): every session completes; the loading indicator appears within 200 ms; the first question is ready in a median under 8 s; with prefetch and a 10 s reading pause, the median wait after "Next question" is under 1 s. The time without prefetch is recorded, with no target.
+
+The first run below used the original condition: a median under 5 s without prefetch, near-instant with prefetch.
+
+### Results
+
+| Date | Run by | Deployment | Topic | Sessions | Questions | Median without prefetch | Median with prefetch (3 s pause) | Result |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 2026-11-27 | Claude Code | API production `dpl_FAtkcjbaDNKAQLLFCyKaEni5gjLM` (commit 12a42f3) | JavaScript | 3 completed | 30 | 9.7 s | 6.4 s (2 sessions; the first run did not measure it) | Failed |
+| 2026-11-27 | Claude Code | Same | React | 2 stopped at question 8 | 14 | 10.8 s | 8.1 s | Failed |
+
+Over the 44 questions: median 10.2 s without prefetch, from 3.7 s to 31.2 s, and 3 questions under 5 s. By kind: single choice 8.9 s (23), multiple choice 11.1 s (13), code exercise 13.2 s (8). With the 3 s reading pause, no question showed in under 0.5 s; the median wait after "Next question" was 7.5 s. The loading status appeared 3 to 5 ms after Start, within the 200 ms of NFR-1.
+
+Findings:
+
+- **The model's output drives the latency.** The API's logs show 500 to 8,200 output tokens per request, adaptive thinking included, at about 200 tokens per second: a single-choice question with 1,700 output tokens takes about 9 s on the server. The first question of a session, at level 3 with a short output, is the only one usually under 5 s. The parameters are those of plan §8.2: Claude Haiku 5.5, adaptive thinking, effort `medium`.
+- **A rejected draft doubles the wait.** 8 of the 44 requests needed a second attempt (`near-duplicate` 4 times, `field-too-long` 3 times, `correct-count` once) and took 21 to 31 s.
+- **React code exercises often fail.** 3 of the 4 React code exercises were rejected as `field-too-long`, and 2 of them failed both attempts: the API returned `generation_failed` and both React sessions stopped at question 8 on the error screen. The log line names the rule but not the field, so the field that is too long is not known yet.
+- The third React session was not run: it would hit the same failure.
+
+Local diagnosis of the React failure (2026-11-27, local API with the workspace's local key, commits after 12a42f3):
+
+| Change | React sessions | Code exercises rejected as too long | Sessions stopped by it | Result |
+| --- | --- | --- | --- | --- |
+| None (rejection details added to the log) | 1 | 1 of 1 at question 8: statement too long, both attempts | 1 | The statement (prompt) of the exercise is over its 600-character limit |
+| Retry message gives the length and the excess; about 80 words asked | 3 | 2 of 6, both at question 8: 645 then 626 characters (failed), 756 then accepted | 1 (a third session stopped once on an Upstash timeout, `ai_unavailable`, as designed) | Closer, not fixed |
+| Statement limit of code exercises raised to 900 characters (plan §8.4 amended), about 120 words asked | 1 | 0 of 2 | 0 | Fixed on this run; confirmed by the next M2 run |
+
+One code review failed once as `invalid_output`; the feedback screen then offers Retry and the session goes on (plan §10).
+
+Decision (project owner, 2026-11-27): content quality comes first, so the model call parameters of plan §8.2 stay as they are, effort `medium` included. NFR-1 and the pass condition of M2 are amended instead: the prefetch hides the generation time while the visitor reads the feedback. The React failure must still be fixed, since every session must complete: see the local diagnosis above. M2 runs again on production once these changes are deployed.
+
 
 ## M3 — Visitor IP reaches the API through the rewrite
 
@@ -128,4 +173,31 @@ Findings:
 
 ## M5 — Screen reader and keyboard pass
 
-Recorded in T29.
+Covers NFR-2 (WCAG 2.2 AA, keyboard only, focus can always leave the code editor) and NFR-7 (desktop layouts at 1024 px and 1440 px).
+
+### How to run
+
+**Keyboard and layout.** The M2 script plays every session with the keyboard only: it reaches every control with Tab (at most 60 presses, otherwise it reports a focus trap), checks options with Space and the arrow keys, leaves the code editor with Escape then Tab, and presses buttons with Enter. On every screen it runs an axe scan with all rules and checks that the page has no horizontal overflow. Sessions alternate between 1024 × 768 and 1440 × 900.
+
+**Screen reader.** 👤 With VoiceOver (Cmd+F5) and Safari on the production demo, complete a session of each topic at 1440 px, with a code exercise answered and its review read, and check that:
+
+1. every new screen announces its heading (focus moves to the `h1`, plan §13.3);
+2. the loading state is announced as a status;
+3. the prompt, the snippet and each option are read, and the option group says whether one or several answers are expected;
+4. the code editor is announced as "Your solution", its hint about Escape then Tab is read, and the test results are announced after "Run tests";
+5. the verdict, the explanation and the AI review are read on the feedback screen;
+6. the summary reads the score, the final level, the level chart's text alternative and the concepts to review;
+7. at no point does focus get stuck or land on an element that is not announced.
+
+### Pass condition
+
+As amended on 2026-11-27 (plan §16.3): a full session can be completed with the keyboard only, with no focus trap. The screen reader pass is not blocking: it is recorded with the points it checked, and completed when the project owner runs it. Automated checks (axe, keyboard) cover labels, roles and focus; only a screen reader confirms what is announced, such as the loading status, the test results and the review.
+
+### Results
+
+| Date | Run by | Deployment | Pass | Viewports | Scope | Result |
+| --- | --- | --- | --- | --- | --- | --- |
+| 2026-11-27 | Claude Code | API production `dpl_FAtkcjbaDNKAQLLFCyKaEni5gjLM`, quiz at commit 12a42f3 | Keyboard (M2 script, Chromium) | 1024 × 768 (3 sessions), 1440 × 900 (2 sessions) | 3 complete JavaScript sessions, home to summary; 2 React sessions to question 8; 44 questions of all kinds, 8 code exercises | Passed: no focus trap, no axe violation, no horizontal overflow |
+| 2026-11-27 | Project owner | Quiz production | Screen reader (VoiceOver, Safari) | Not recorded | Checklist points 1 and 3 | Partial: the content of the screens is read, and the option groups say what to select. Points 2 and 4 to 7 not checked. VoiceOver used a French voice: a setting of VoiceOver, since the page declares `lang="en"` |
+
+Decision (project owner, 2026-11-27): the screen reader pass is set aside and does not block the release. The keyboard and layout pass is done, so M5 passes. Points 2 and 4 to 7 of the checklist remain to check: the loading status, the code editor and its test results, the feedback and the review, the summary, and a full session without a focus trap.

@@ -1,6 +1,6 @@
 # Spec 001 — Adaptive quiz (MVP)
 
-- Status: Approved (2026-11-17), NFR-3 amended and approved (2026-11-17)
+- Status: Approved (2026-11-17), NFR-3 amended and approved (2026-11-17), NFR-1 amended and approved (2026-11-27)
 - Date: 2026-11-17
 - Constitution: 1.0.0
 
@@ -111,7 +111,7 @@ Acceptance criteria are numbered so that each one can be linked to a test (const
 
 ## 6. Non-functional requirements
 
-- **NFR-1 Responsiveness.** A loading indicator appears within 200 ms of any action that waits for the AI. A new question is usually ready within 5 seconds.
+- **NFR-1 Responsiveness.** A loading indicator appears within 200 ms of any action that waits for the AI. Content quality takes priority over speed. The next question is generated while the visitor reads the feedback, so it is usually ready when they move on. The first question of a session, and a question whose first draft is rejected, can take longer; the loading indicator stays until the question is ready.
 - **NFR-2 Accessibility.** WCAG 2.2 level AA (constitution, principle VIII). The whole quiz, code editor included, can be used with a keyboard only, and keyboard focus can always leave the code editor.
 - **NFR-3 Bounded cost.** A session triggers a bounded number of AI requests: at most two per question generated (the second only when the first output fails validation), plus one review per code exercise submitted. The summary needs no AI request.
 - **NFR-4 Usage limit.** A single visitor can start only a limited number of sessions per hour. The exact limit is set in the plan.

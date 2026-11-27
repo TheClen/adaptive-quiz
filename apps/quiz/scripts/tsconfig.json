@@ -3,6 +3,8 @@
   "compilerOptions": {
     "noEmit": true,
     "allowImportingTsExtensions": true,
+    // m2-latency.ts runs callbacks in the page.
+    "lib": ["es2024", "dom"],
     "types": ["node"]
   },
   "include": ["."]

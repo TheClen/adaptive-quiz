@@ -20,7 +20,8 @@ export type ForbiddenConstruct =
   | "date-now";
 
 /** A field with a length limit (plan §8.4 step 2). */
-export type LimitedField = "prompt" | "option" | "explanation" | "code" | "test-description";
+export type LimitedField =
+  "prompt" | "statement" | "option" | "explanation" | "code" | "test-description";
 
 /**
  * Why the first draft was rejected (plan §8.4). It carries only enums and numbers,
@@ -35,7 +36,8 @@ export type RetryReason =
   | { readonly rule: "correct-count"; readonly count: number }
   | { readonly rule: "no-incorrect-option" }
   | { readonly rule: "duplicate-options" }
-  | { readonly rule: "field-too-long"; readonly field: LimitedField }
+  /** `length` is the length of the longest value of `field` in the draft. */
+  | { readonly rule: "field-too-long"; readonly field: LimitedField; readonly length: number }
   | { readonly rule: "snippet-language" }
   /** `question` is the 1-based line of the similar stem in `<previous_questions>`. */
   | { readonly rule: "near-duplicate"; readonly question: number }
@@ -74,6 +76,7 @@ const CONSTRUCTS = {
 
 const FIELDS = {
   prompt: ["The question", LIMITS.prompt],
+  statement: ["The statement", LIMITS.exercisePrompt],
   option: ["An option", LIMITS.optionText],
   explanation: ["The explanation", LIMITS.explanation],
   code: ["A piece of code", LIMITS.code],
@@ -83,6 +86,11 @@ const FIELDS = {
 /** A count written by the server. `Math.trunc` keeps it a plain integer. */
 function n(value: number): string {
   return String(Math.trunc(value));
+}
+
+function characters(count: number): string {
+  const whole = Math.trunc(count);
+  return whole === 1 ? "1 character" : `${whole.toLocaleString("en-US")} characters`;
 }
 
 function options(count: number): string {
@@ -112,7 +120,9 @@ function ruleSentence(kind: QuestionKind, reason: RetryReason): string {
       return "Two options had the same text.";
     case "field-too-long": {
       const [name, limit] = FIELDS[reason.field];
-      return `${name} was longer than ${limit.toLocaleString("en-US")} characters.`;
+      // Models count characters poorly: the excess gives them a concrete target.
+      const excess = Math.max(1, Math.trunc(reason.length) - limit);
+      return `${name} was ${characters(reason.length)} long, over the limit of ${characters(limit)}. Shorten it by at least ${characters(excess)}.`;
     }
     case "snippet-language":
       return 'The snippet language was wrong: use "jsx" only for a React snippet that contains JSX.';
